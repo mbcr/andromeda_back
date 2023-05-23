@@ -13,7 +13,7 @@ from pprint import pprint
 
 class CustomAccountManager(BaseUserManager):
     
-    def create_superuser(self, email, first_name, password, **other_fields):
+    def create_superuser(self, email, password, **other_fields):
 
         other_fields.setdefault('is_staff', True)
         other_fields.setdefault('is_superuser', True)
@@ -29,9 +29,9 @@ class CustomAccountManager(BaseUserManager):
         # #Create Person object associated with this superuser
         # This functions calls create_user, which is already creating an associated Person
 
-        return self.create_user(email, first_name, password, **other_fields)
+        return self.create_user(email, password, **other_fields)
 
-    def create_user(self, email, first_name, password, **other_fields):
+    def create_user(self, email, password, **other_fields):
         # def create_new_organisation(organisation:dict) -> clinic_models.Clinic | corporate_models.Corporate:
         #     organisation_type = organisation['organisation_type']
         #     if organisation_type == 'corporate':
@@ -63,49 +63,21 @@ class CustomAccountManager(BaseUserManager):
 
         if not email:
             raise ValueError(_('You must provide an email address'))
-        if not first_name:
-            raise ValueError(_('You must provide a first name'))
 
         # organisation = other_fields.get('registration_form')
         # organisation_type = organisation['organisation_type']
         # new_organisation = create_new_organisation(organisation)
 
         email = self.normalize_email(email)
-        user = self.model(email=email, first_name=first_name, **other_fields)
+        user = self.model(email=email, **other_fields)
         user.set_password(password)
         
-
-        #Create Person object associated with this user
-        associated_person = Person(
-            primeiroNome = first_name,
-            sobrenomes = other_fields.get('last_name'),
-            email = email,
-            is_user = True,
-            user = user
-        )
         #Save user and associated person
-        user.save()
-        associated_person.save()
-
-        #Associate the user with their organisation
-        # if organisation_type == 'corporate':
-        #     user.corporate_group = new_organisation
-        #     user_role = Role.objects.get(id=7)
-        #     user.roles.add(user_role)
-        #     user.set_tier(1)
-        #     user.add_to_group('client_Grupo_Demonstração')
-        # elif organisation_type == 'clinic':
-        #     user.clinic_group = new_organisation
-        #     user_role = Role.objects.get(id=8)
-        #     user.roles.add(user_role)
-        #     user.set_tier(3)
         user.save()
         return user
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_('email address'), unique=True)
-    first_name = models.CharField(max_length=150, blank=False)
-    last_name = models.CharField(max_length=150, blank=True)
     start_date = models.DateTimeField(default=timezone.now)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
@@ -117,13 +89,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     objects = CustomAccountManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name','last_name','registration_form']
+    REQUIRED_FIELDS = ['registration_form']
 
     def __str__(self):
         return self.email
-    
-    def fullName(self):
-        return self.first_name+' '+self.last_name
 
     def set_tier(self, tier):
         from scripts.feature_access_control import set_tier_for_target
@@ -183,53 +152,53 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 #   def __str__(self):
 #       return self.get_id_display()
 
-class PersonManager(models.Manager, OLP_Functions):
-    pass
+# class PersonManager(models.Manager, OLP_Functions):
+#     pass
 
-class Person(models.Model):
-    ## Independent fields
-    primeiroNome = models.CharField(max_length=32, null=True)
-    sobrenomes = models.CharField(max_length=128, null=True)
-    email = models.EmailField(null=True)
-    cpf =  models.CharField(max_length=11, null=True)
-    is_user = models.BooleanField(null=True)
-    user = models.ForeignKey(to='users.CustomUser', on_delete=models.SET_NULL, null=True, blank=True)
-    # latest_corporateGroup = models.ForeignKey(to='corporate.Corporate', on_delete=models.SET_NULL, null=True, blank=True, related_name='latest_corporateGroup')
+# class Person(models.Model):
+#     ## Independent fields
+#     primeiroNome = models.CharField(max_length=32, null=True)
+#     sobrenomes = models.CharField(max_length=128, null=True)
+#     email = models.EmailField(null=True)
+#     cpf =  models.CharField(max_length=11, null=True)
+#     is_user = models.BooleanField(null=True)
+#     user = models.ForeignKey(to='users.CustomUser', on_delete=models.SET_NULL, null=True, blank=True)
+#     # latest_corporateGroup = models.ForeignKey(to='corporate.Corporate', on_delete=models.SET_NULL, null=True, blank=True, related_name='latest_corporateGroup')
 
-    ## Computed fields (refactor update_computed_and_cache_fields after any alteration)
+#     ## Computed fields (refactor update_computed_and_cache_fields after any alteration)
 
-    ## Cache fields (refactor update_computed_and_cache_fields after any alteration)
+#     ## Cache fields (refactor update_computed_and_cache_fields after any alteration)
 
-    ## Instance control fields
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(to='users.CustomUser', on_delete=models.SET_NULL, null=True, related_name='created_by')
+#     ## Instance control fields
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_by = models.ForeignKey(to='users.CustomUser', on_delete=models.SET_NULL, null=True, related_name='created_by')
 
-    objects = PersonManager()
+#     objects = PersonManager()
 
-    def __str__(self) :
-        return f"{self.primeiroNome} {self.sobrenomes}"
+#     def __str__(self) :
+#         return f"{self.primeiroNome} {self.sobrenomes}"
 
-    def save(self, *args, **kwargs):
-        first_save = self.pk is None
-        if first_save:
-            self.update_computed_and_cache_fields()
-            super().save(*args, **kwargs)
-        else:
-            self.update_computed_and_cache_fields()
-            super().save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         first_save = self.pk is None
+#         if first_save:
+#             self.update_computed_and_cache_fields()
+#             super().save(*args, **kwargs)
+#         else:
+#             self.update_computed_and_cache_fields()
+#             super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        self.active = False
-        self.deleted_at = datetime.now()
-        self.save()
+#     def delete(self, *args, **kwargs):
+#         self.active = False
+#         self.deleted_at = datetime.now()
+#         self.save()
     
-    class Meta:
-        permissions = [
-            ('OLP_clearance_Person', 'Object level permission handle')
-        ]
+#     class Meta:
+#         permissions = [
+#             ('OLP_clearance_Person', 'Object level permission handle')
+#         ]
 
-    def update_computed_and_cache_fields(self):
-        pass
+#     def update_computed_and_cache_fields(self):
+#         pass
 
-    def fullName(self):
-        return self.primeiroNome+' '+self.sobrenomes
+#     def fullName(self):
+#         return self.primeiroNome+' '+self.sobrenomes

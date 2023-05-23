@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser, Person
+from .models import CustomUser
 
 from django import forms
 from django.contrib import admin
@@ -62,10 +62,10 @@ admin.site.register(Group, GroupAdmin)
 
 class UserAdminConfig(UserAdmin):
     model = CustomUser
-    search_fields = ('email', 'first_name', 'last_name')
-    list_filter = ('email', 'first_name', 'last_name', 'is_active', 'is_staff')
+    search_fields = ('email',)
+    list_filter = ('email', 'is_active', 'is_staff')
     ordering = ('-start_date',)
-    list_display = ('email', 'first_name', 'last_name',
+    list_display = ('email',
                     'is_active', 'is_staff',)
     # form = RoleAdminForm # Attempt to make role alternatives to be displayed. It didn't work.
 
@@ -78,7 +78,7 @@ class UserAdminConfig(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2', 'is_active', 'is_staff'),
+            'fields': ('email', 'password1', 'password2', 'is_active', 'is_staff'),
             # 'list': ('roles',),
             }
          ),
@@ -86,4 +86,3 @@ class UserAdminConfig(UserAdmin):
 
 
 admin.site.register(CustomUser, UserAdminConfig)
-admin.site.register(Person)
