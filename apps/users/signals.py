@@ -34,7 +34,7 @@ def notifySystemManagerOfNewUser(sender, instance, created, **kwargs):
         from django.core.mail import send_mail
         from django.conf import settings
         subject = ('New user registration on DAEDALUS')
-        html_message = f'A new user ({instance.first_name}, {instance.email}) has registered on DAEDALUS. \nPlease check the admin panel to issue correct permissions.\nhttps://daedalus-back-end.herokuapp.com/admin/'
+        html_message = f'A new user ({instance.email}) has registered on DAEDALUS. \nPlease check the admin panel to issue correct permissions.\nhttps://daedalus-back-end.herokuapp.com/admin/'
         plain_message = html_message
         from_email = settings.EMAIL_HOST_USER
         to = [settings.EMAIL_HOST_USER]
