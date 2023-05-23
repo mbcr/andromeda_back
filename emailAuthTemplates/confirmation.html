@@ -1,0 +1,22 @@
+{% load i18n %}
+
+{% block subject %}
+{% blocktrans %}{{ site_name }} - Sua conta foi criada e ativada com sucesso!{% endblocktrans %}
+{% endblock %}
+
+{% block text_body %}
+{% trans "Sua conta foi criada e está pronta para uso!" %}
+{% trans "O usuário ainda não possui permissões para visualizar dados. Favor entrar em contato com o gestor da conta para vincular o usuário à empresa." %}
+
+{% trans "Obrigado por utilizar nossa plataforma!" %}
+
+{% blocktrans %}Do time {{ site_name }}{% endblocktrans %}
+{% endblock text_body %}
+
+{% block html_body %}
+<p>{% trans "Sua conta foi criada e está pronta para uso!" %}</p>
+
+<p>{% trans "Obrigado por utilizar nossa plataforma!" %}</p>
+
+<p>{% blocktrans %}Do time {{ site_name }}{% endblocktrans %}</p>
+{% endblock html_body %}
