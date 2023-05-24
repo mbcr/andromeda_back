@@ -1,12 +1,16 @@
 from django.http import JsonResponse
-from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 import requests
+
 
 from .models import Assessment
 from .serializers import AssessmentSerializer
 
 class AssessmentView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         print("CACILDA!")
         print(request.data)
@@ -41,4 +45,4 @@ class AssessmentView(APIView):
         #     return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_400_BAD_REQUEST)
 
         # return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return JsonResponse({"info": "CACILDA!", "data": request.data}, status=status.HTTP_200_OK)
+        return JsonResponse({"extra-info": "CACILDA!", "request_data": request.data}, status=status.HTTP_200_OK)
