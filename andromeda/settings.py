@@ -43,6 +43,9 @@ SECRET_KEY = env('SECRET_KEY')
 # DEBUG = True
 DEBUG = env('DEBUG') == 'True'
 
+# Crystal API KEY
+CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
+
 ALLOWED_HOSTS = [
     'https://infotidings-back-end.herokuapp.com',
     'https://infotidings-front-end.herokuapp.com',
