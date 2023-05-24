@@ -25,6 +25,8 @@ urlpatterns = [
     path('api/v1/', include('apps.surveys.urls')),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
+
+    path('api/v1/', include('apps.chainvet.urls')),
 ]
 
 admin.site.site_header = "Andromeda"
