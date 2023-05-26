@@ -19,9 +19,9 @@ class AssessmentView(APIView):
 
         if request.data['assessment_type'] == "address":
             direction = "withdrawal"
-            address = request.data['hash']
+            address = request.data['address']
             name = "test_user"
-            currency = "eth"
+            currency = request.data['currency']
 
             response = requests.post(
                 "https://apiexpert.crystalblockchain.com/monitor/tx/add",
@@ -59,9 +59,52 @@ class AssessmentView(APIView):
                 return JsonResponse(payload, status=status.HTTP_200_OK)
             else:
                 return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        elif request.data.assessment_type == "transaction":
-            print('Transaction check is not implemented yet')
-            return JsonResponse({"error": "Address check is not implemented yet"}, status=status.HTTP_400_BAD_REQUEST)
+        elif request.data['assessment_type'] == "transaction":
+            direction = "deposit"
+            address = request.data['address']
+            tx = request.data['transaction_hash']
+            name = "test_user"
+            currency = "eth"
+
+            response = requests.post(
+                "https://apiexpert.crystalblockchain.com/monitor/tx/add",
+                headers={
+                    "accept": "application/json",
+                    "X-Auth-Apikey": settings.CRYSTAL_API_KEY
+                },
+                data= {
+                    "direction": direction,
+                    "address": address,
+                    "tx": tx,
+                    "name": name,
+                    "currency": currency
+                }
+            )
+            print('chainvet>views>AssessmentView>Crystal API response:')
+            pprint(response.json())
+            print('...continuing...')
+
+            if response.status_code == 200:
+                response_data = response.json()
+                new_assessment = Assessment(
+                    assessment_id = response_data['data']['id'],
+                    type_of_assessment = "address",
+                    response_data = response_data,
+                    status_assessment = response_data['data']['status']
+                )
+                new_assessment.save()
+                payload = {
+                    "type": "transaction",
+                    "address": address,
+                    "transaction_hash": tx,
+                    "riskscore": response_data['data']['riskscore'],
+                    "risk_signals": response_data['data']['signals']
+                }
+
+                return JsonResponse(payload, status=status.HTTP_200_OK)
+            else:
+                return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         else:
             print('Invalid assessment type')
             return JsonResponse({"error": "Invalid assessment type"}, status=status.HTTP_400_BAD_REQUEST)
