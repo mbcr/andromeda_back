@@ -3,17 +3,19 @@ from rest_framework import status
 from rest_framework.views import APIView
 import requests
 from django.conf import settings
+# from rest_framework.response import Response
 
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_api_key.permissions import HasAPIKey
+from apps.users.permissions import HasChainVetAPIKey
 
 from pprint import pprint
 from .models import Assessment
 from .serializers import AssessmentSerializer
+from apps.users.models import ChainVetAPIKey
 
 class AssessmentView(APIView):
-    permission_classes = [HasAPIKey]
+    permission_classes = [HasChainVetAPIKey]
 
     def post(self, request):
         print("chainvet>views>AssessmentView>post>Received request.data:")
@@ -143,3 +145,34 @@ class AssessmentView(APIView):
 
         # return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return JsonResponse({"extra-info": "CACILDA!", "request_data": request.data}, status=status.HTTP_200_OK)
+
+class CreateAPIKeyView(APIView):
+    """
+    A view that allows authenticated users to create new API keys.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        key_name = kwargs.get('api_key_name', '')
+        api_key, key = ChainVetAPIKey.objects.create_key(name=key_name, user=self.request.user)
+        return JsonResponse({"key": key}, status=status.HTTP_201_CREATED)
+
+
+class DeleteAPIKeyView(APIView):
+    """
+    A view that allows authenticated users to delete an API key.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        api_key_prefix = kwargs.get('api_key_prefix', '')
+
+        try:
+            api_key = ChainVetAPIKey.objects.get(prefix=api_key_prefix, user=self.request.user)
+            api_key.delete()
+            return JsonResponse({},status=status.HTTP_204_NO_CONTENT)
+        except ChainVetAPIKey.DoesNotExist:
+            return JsonResponse({"detail": "API Key not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+

@@ -31,9 +31,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = tuple(User.REQUIRED_FIELDS) + (
             settings.USER_ID_FIELD,
             settings.LOGIN_FIELD,
-            'roles', #<--ADDED,
-            'tier', #<--ADDED,
-            'registration_form', #<--ADDED,
+            # 'roles', #<--ADDED,
+            # 'tier', #<--ADDED,
+            # 'registration_form', #<--ADDED,
         ) 
         read_only_fields = (settings.LOGIN_FIELD,)
 

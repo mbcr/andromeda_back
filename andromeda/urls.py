@@ -20,12 +20,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('djoser.urls')),
     path('api/v1/', include('djoser.urls.authtoken')),
-    path('api/v1/', include('apps.users.urls')),
-    path('api/v1/', include('apps.logManager.urls')),
-    path('api/v1/', include('apps.surveys.urls')),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
 
+    path('api/v1/', include('apps.users.urls')),
+    path('api/v1/', include('apps.logManager.urls')),
+    path('api/v1/', include('apps.surveys.urls')),
     path('api/v1/', include('apps.chainvet.urls')),
 ]
 

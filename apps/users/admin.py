@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser
+from .models import CustomUser, ChainVetAPIKey
 
 from django import forms
 from django.contrib import admin
@@ -48,6 +48,7 @@ class GroupAdmin(origGroupAdmin):
 admin.site.unregister(Group)
 admin.site = admin.AdminSite(name='my_admin')
 admin.site.register(Group, GroupAdmin)
+admin.site.register(ChainVetAPIKey)
 
 # class RoleAdminForm(forms.ModelForm):
 # ''' Attempt to make role alternatives to be displayed. It didn't work.'''

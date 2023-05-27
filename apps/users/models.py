@@ -123,7 +123,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         
 
 
-class UserAPIKey(AbstractAPIKey):
+class ChainVetAPIKey(AbstractAPIKey):
     user = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
