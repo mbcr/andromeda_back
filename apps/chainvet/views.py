@@ -1,16 +1,19 @@
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
 import requests
 from django.conf import settings
+
+from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_api_key.permissions import HasAPIKey
 
 from pprint import pprint
 from .models import Assessment
 from .serializers import AssessmentSerializer
 
 class AssessmentView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [HasAPIKey]
 
     def post(self, request):
         print("chainvet>views>AssessmentView>post>Received request.data:")
