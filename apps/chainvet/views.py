@@ -10,10 +10,12 @@ from rest_framework.permissions import IsAuthenticated
 from apps.users.permissions import HasChainVetAPIKey
 
 from django.db import transaction
-from pprint import pprint
 from .models import Assessment
 from .serializers import AssessmentSerializer
 from apps.users.models import ChainVetAPIKey
+
+from pprint import pprint
+from datetime import datetime
 
 class AssessmentView(APIView):
     permission_classes = [HasChainVetAPIKey]
@@ -31,11 +33,19 @@ class AssessmentView(APIView):
             if user_api_credits <= 0:
                 return JsonResponse({"error": "Insufficient API credits"}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
+
             if request.data['assessment_type'] == "address":
-                direction = "withdrawal"
-                address = request.data['address']
                 name = "test_user"
+                address = request.data['address']
                 currency = request.data['currency']
+                
+                direction = "withdrawal"
+
+            # elif request.data['assessment_type'] == "transaction":
+            #     direction = "deposit"
+            #     tx = request.data['transaction_hash']
+
+
 
                 response = requests.post(
                     "https://apiexpert.crystalblockchain.com/monitor/tx/add",
@@ -61,6 +71,7 @@ class AssessmentView(APIView):
                     user_api_credits -= 1
                     user.api_credits = user_api_credits
                     user.save()
+                    updated_at_datetime = datetime.utcfromtimestamp(response_data['data']['updated_at'])
                     new_assessment = Assessment(
                         assessment_updated_at = updated_at_datetime,
                         currency = currency,
@@ -138,7 +149,7 @@ class AssessmentView(APIView):
                 print('Invalid assessment type')
                 return JsonResponse({"error": "Invalid assessment type"}, status=status.HTTP_400_BAD_REQUEST)
         
-        except UserAPIKey.DoesNotExist:
+        except ChainVetAPIKey.DoesNotExist:
             return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
 
         # return JsonResponse({"extra-info": "CACILDA!", "request_data": request.data}, status=status.HTTP_200_OK)
