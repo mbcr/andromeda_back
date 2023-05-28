@@ -23,7 +23,12 @@ class Assessment(models.Model):
     risk_score = models.FloatField(null=True, blank=True)
     risk_grade = models.CharField(max_length=32, null=True, blank=True)
     risk_signals = JSONField(null=True, blank=True)
+    risk_volume_coin = models.FloatField(null=True, blank=True)
+    risk_volume_fiat = models.FloatField(null=True, blank=True)
     assessment_updated_at = models.DateTimeField(null=True, blank=True)
+    transaction_volume_coin = models.FloatField(null=True, blank=True)
+    transaction_volume_fiat = models.FloatField(null=True, blank=True)
+    transaction_volume_fiat_currency_code = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
         formatted_time = self.time_of_request.strftime('%Y.%m.%d %Hh%Mm%Ss')

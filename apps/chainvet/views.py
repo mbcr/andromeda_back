@@ -33,126 +33,94 @@ class AssessmentView(APIView):
             if user_api_credits <= 0:
                 return JsonResponse({"error": "Insufficient API credits"}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
+            name = "test_user"
+            address = request.data['address']
+            currency = request.data['currency']
 
             if request.data['assessment_type'] == "address":
-                name = "test_user"
-                address = request.data['address']
-                currency = request.data['currency']
-                
                 direction = "withdrawal"
-
-            # elif request.data['assessment_type'] == "transaction":
-            #     direction = "deposit"
-            #     tx = request.data['transaction_hash']
-
-
-
-                response = requests.post(
-                    "https://apiexpert.crystalblockchain.com/monitor/tx/add",
-                    headers={
-                        "accept": "application/json",
-                        "X-Auth-Apikey": settings.CRYSTAL_API_KEY
-                    },
-                    data= {
-                        "direction": direction,
-                        "address": address,
-                        "name": name,
-                        "currency": currency
-                    }
-                )
-                print('chainvet>views>AssessmentView>Crystal API response:')
-                pprint(response.json())
-
-                if response.status_code != 200:
-                    return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
-                response_data = response.json()
-                with transaction.atomic():
-                    user_api_credits -= 1
-                    user.api_credits = user_api_credits
-                    user.save()
-                    updated_at_datetime = datetime.utcfromtimestamp(response_data['data']['updated_at'])
-                    new_assessment = Assessment(
-                        assessment_updated_at = updated_at_datetime,
-                        currency = currency,
-                        address_hash = address,
-                        user = user,
-                        type_of_assessment = "address",
-                        response_data = response_data,
-
-                        risk_grade = response_data['data']['alert_grade'],
-                        risk_score = response_data['data']['riskscore'],
-                        risk_signals = response_data['data']['signals'],
-                        status_assessment = response_data['data']['status'],
-                        assessment_id = response_data['data']['id'],
-                    )
-                    new_assessment.save()
-                payload = {
-                    "user_remaining_credits": user_api_credits,
-                    "type": "address",
-                    "hash": address,
-                    "assessment_status": response_data['data']['status'],
-                    "risk_grade": response_data['data']['alert_grade'],
-                    "risk_score": response_data['data']['riskscore'],
-                    "risk_signals": response_data['data']['signals']
+                bcb_request_data = {
+                    "direction": direction,
+                    "address": address,
+                    "name": name,
+                    "currency": currency
                 }
-
-                return JsonResponse(payload, status=status.HTTP_200_OK)
-                    
             elif request.data['assessment_type'] == "transaction":
                 direction = "deposit"
-                address = request.data['address']
                 tx = request.data['transaction_hash']
-                name = "test_user"
-                currency = "eth"
-
-                response = requests.post(
-                    "https://apiexpert.crystalblockchain.com/monitor/tx/add",
-                    headers={
-                        "accept": "application/json",
-                        "X-Auth-Apikey": settings.CRYSTAL_API_KEY
-                    },
-                    data= {
-                        "direction": direction,
-                        "address": address,
-                        "tx": tx,
-                        "name": name,
-                        "currency": currency
-                    }
-                )
-                print('chainvet>views>AssessmentView>Crystal API response:')
-                pprint(response.json())
-                print('...continuing...')
-
-                if response.status_code != 200:
-                    return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-                response_data = response.json()
-                new_assessment = Assessment(
-                    assessment_id = response_data['data']['id'],
-                    type_of_assessment = "address",
-                    response_data = response_data,
-                    status_assessment = response_data['data']['status']
-                )
-                new_assessment.save()
-                payload = {
-                    "type": "transaction",
+                bcb_request_data = {
+                    "direction": direction,
                     "address": address,
-                    "transaction_hash": tx,
-                    "riskscore": response_data['data']['riskscore'],
-                    "risk_signals": response_data['data']['signals']
+                    "tx": tx,
+                    "name": name,
+                    "currency": currency                
                 }
-
-                return JsonResponse(payload, status=status.HTTP_200_OK)
-
             else:
                 print('Invalid assessment type')
                 return JsonResponse({"error": "Invalid assessment type"}, status=status.HTTP_400_BAD_REQUEST)
+
+            response = requests.post(
+                "https://apiexpert.crystalblockchain.com/monitor/tx/add",
+                headers={
+                    "accept": "application/json",
+                    "X-Auth-Apikey": settings.CRYSTAL_API_KEY
+                },
+                data= bcb_request_data
+            )
+            print('chainvet>views>AssessmentView>Crystal API response:')
+            pprint(response.json())
+
+            if response.status_code != 200:
+                return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            response_data = response.json()
+            with transaction.atomic():
+                user_api_credits -= 1
+                user.api_credits = user_api_credits
+                user.save()
+                updated_at_datetime = datetime.utcfromtimestamp(response_data['data']['updated_at'])
+                new_assessment = Assessment(
+                    assessment_updated_at = updated_at_datetime,
+                    currency = currency,
+                    address_hash = address,
+                    user = user,
+                    type_of_assessment = "address",
+                    response_data = response_data,
+
+                    risk_grade = response_data['data']['alert_grade'],
+                    risk_score = response_data['data']['riskscore'],
+                    risk_signals = response_data['data']['signals'],
+                    status_assessment = response_data['data']['status'],
+                    assessment_id = response_data['data']['id'],
+                )
+                if request.data['assessment_type'] == "transaction":
+                    new_assessment.transaction_hash = tx
+                    new_assessment.transaction_volume_coin = response_data['data']['amount']
+                    new_assessment.transaction_volume_fiat = response_data['data']['fiat']
+                    new_assessment.transaction_volume_fiat_currency_code = response_data['data']['fiat_code_effective']
+                    new_assessment.risk_volume_coin = response_data['data']['risky_volume']
+                    new_assessment.risk_volume_fiat = response_data['data']['risky_volume_fiat']
+                new_assessment.save()
+            payload = {
+                "user_remaining_credits": user_api_credits,
+                "type": "address",
+                "hash": address,
+                "assessment_status": response_data['data']['status'],
+                "risk_grade": response_data['data']['alert_grade'],
+                "risk_score": response_data['data']['riskscore'],
+                "risk_signals": response_data['data']['signals']
+            }
+            if request.data['assessment_type'] == "transaction":
+                payload['type'] = "transaction"
+                payload['transaction_hash'] = tx
+                payload['risk_volume_coin'] = response_data['data']['risky_volume']
+                payload['risk_volume_fiat'] = response_data['data']['risky_volume_fiat']
+                payload['risk_volume_fiat_currency_code'] = response_data['data']['fiat_code_effective']
+
+            return JsonResponse(payload, status=status.HTTP_200_OK)
         
         except ChainVetAPIKey.DoesNotExist:
             return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
-
-        # return JsonResponse({"extra-info": "CACILDA!", "request_data": request.data}, status=status.HTTP_200_OK)
 
 class CreateAPIKeyView(APIView):
     """
@@ -164,7 +132,6 @@ class CreateAPIKeyView(APIView):
         key_name = kwargs.get('api_key_name', '')
         api_key, key = ChainVetAPIKey.objects.create_key(name=key_name, user=self.request.user)
         return JsonResponse({"key": key}, status=status.HTTP_201_CREATED)
-
 
 class DeleteAPIKeyView(APIView):
     """
