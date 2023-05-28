@@ -62,18 +62,27 @@ class AssessmentView(APIView):
                     user.api_credits = user_api_credits
                     user.save()
                     new_assessment = Assessment(
-                        assessment_id = response_data['data']['id'],
+                        assessment_updated_at = updated_at_datetime,
+                        currency = currency,
+                        address_hash = address,
                         user = user,
                         type_of_assessment = "address",
                         response_data = response_data,
-                        status_assessment = response_data['data']['status']
+
+                        risk_grade = response_data['data']['alert_grade'],
+                        risk_score = response_data['data']['riskscore'],
+                        risk_signals = response_data['data']['signals'],
+                        status_assessment = response_data['data']['status'],
+                        assessment_id = response_data['data']['id'],
                     )
                     new_assessment.save()
                 payload = {
                     "user_remaining_credits": user_api_credits,
                     "type": "address",
                     "hash": address,
-                    "riskscore": response_data['data']['riskscore'],
+                    "assessment_status": response_data['data']['status'],
+                    "risk_grade": response_data['data']['alert_grade'],
+                    "risk_score": response_data['data']['riskscore'],
                     "risk_signals": response_data['data']['signals']
                 }
 
