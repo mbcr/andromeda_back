@@ -85,10 +85,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     start_date = models.DateTimeField(default=timezone.now)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
-    # roles = models.ManyToManyField(to='users.Role') #<---CONFIRM
-    # corporate_group = models.ForeignKey(to='corporate.Corporate', on_delete=models.SET_NULL, null=True, blank=True)
-    # clinic_group = models.ForeignKey(to='clinic.Clinic', on_delete=models.SET_NULL, null=True, blank=True)
     registration_form = models.JSONField(null=True, blank=True)
+
+    api_credits = models.IntegerField(default=0)
 
     objects = CustomAccountManager()
 

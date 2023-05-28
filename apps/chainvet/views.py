@@ -1,14 +1,15 @@
+import requests
+from django.conf import settings
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
-import requests
-from django.conf import settings
 # from rest_framework.response import Response
 
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from apps.users.permissions import HasChainVetAPIKey
 
+from django.db import transaction
 from pprint import pprint
 from .models import Assessment
 from .serializers import AssessmentSerializer
@@ -18,43 +19,57 @@ class AssessmentView(APIView):
     permission_classes = [HasChainVetAPIKey]
 
     def post(self, request):
-        print("chainvet>views>AssessmentView>post>Received request.data:")
-        print(request.data)
-        print(settings.CRYSTAL_API_KEY)
+        # print("chainvet>views>AssessmentView>post>Received request.data:")
+        # print(request.data)
 
-        if request.data['assessment_type'] == "address":
-            direction = "withdrawal"
-            address = request.data['address']
-            name = "test_user"
-            currency = request.data['currency']
+        api_key = request.META.get("HTTP_X_API_KEY")
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            user = api_key_instance.user
+            user_api_credits = user.api_credits
 
-            response = requests.post(
-                "https://apiexpert.crystalblockchain.com/monitor/tx/add",
-                headers={
-                    "accept": "application/json",
-                    "X-Auth-Apikey": settings.CRYSTAL_API_KEY
-                },
-                data= {
-                    "direction": direction,
-                    "address": address,
-                    "name": name,
-                    "currency": currency
-                }
-            )
-            print('chainvet>views>AssessmentView>Crystal API response:')
-            pprint(response.json())
-            print('...continuing...')
+            if user_api_credits <= 0:
+                return JsonResponse({"error": "Insufficient API credits"}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
-            if response.status_code == 200:
-                response_data = response.json()
-                new_assessment = Assessment(
-                    assessment_id = response_data['data']['id'],
-                    type_of_assessment = "address",
-                    response_data = response_data,
-                    status_assessment = response_data['data']['status']
+            if request.data['assessment_type'] == "address":
+                direction = "withdrawal"
+                address = request.data['address']
+                name = "test_user"
+                currency = request.data['currency']
+
+                response = requests.post(
+                    "https://apiexpert.crystalblockchain.com/monitor/tx/add",
+                    headers={
+                        "accept": "application/json",
+                        "X-Auth-Apikey": settings.CRYSTAL_API_KEY
+                    },
+                    data= {
+                        "direction": direction,
+                        "address": address,
+                        "name": name,
+                        "currency": currency
+                    }
                 )
-                new_assessment.save()
+                print('chainvet>views>AssessmentView>Crystal API response:')
+                pprint(response.json())
+
+                if response.status_code != 200:
+                    return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                response_data = response.json()
+                with transaction.atomic():
+                    user_api_credits -= 1
+                    user.api_credits = user_api_credits
+                    user.save()
+                    new_assessment = Assessment(
+                        assessment_id = response_data['data']['id'],
+                        type_of_assessment = "address",
+                        response_data = response_data,
+                        status_assessment = response_data['data']['status']
+                    )
+                    new_assessment.save()
                 payload = {
+                    "user_remaining_credits": user_api_credits,
                     "type": "address",
                     "hash": address,
                     "riskscore": response_data['data']['riskscore'],
@@ -62,34 +77,35 @@ class AssessmentView(APIView):
                 }
 
                 return JsonResponse(payload, status=status.HTTP_200_OK)
-            else:
-                return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        elif request.data['assessment_type'] == "transaction":
-            direction = "deposit"
-            address = request.data['address']
-            tx = request.data['transaction_hash']
-            name = "test_user"
-            currency = "eth"
+                    
+            elif request.data['assessment_type'] == "transaction":
+                direction = "deposit"
+                address = request.data['address']
+                tx = request.data['transaction_hash']
+                name = "test_user"
+                currency = "eth"
 
-            response = requests.post(
-                "https://apiexpert.crystalblockchain.com/monitor/tx/add",
-                headers={
-                    "accept": "application/json",
-                    "X-Auth-Apikey": settings.CRYSTAL_API_KEY
-                },
-                data= {
-                    "direction": direction,
-                    "address": address,
-                    "tx": tx,
-                    "name": name,
-                    "currency": currency
-                }
-            )
-            print('chainvet>views>AssessmentView>Crystal API response:')
-            pprint(response.json())
-            print('...continuing...')
+                response = requests.post(
+                    "https://apiexpert.crystalblockchain.com/monitor/tx/add",
+                    headers={
+                        "accept": "application/json",
+                        "X-Auth-Apikey": settings.CRYSTAL_API_KEY
+                    },
+                    data= {
+                        "direction": direction,
+                        "address": address,
+                        "tx": tx,
+                        "name": name,
+                        "currency": currency
+                    }
+                )
+                print('chainvet>views>AssessmentView>Crystal API response:')
+                pprint(response.json())
+                print('...continuing...')
 
-            if response.status_code == 200:
+                if response.status_code != 200:
+                    return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
                 response_data = response.json()
                 new_assessment = Assessment(
                     assessment_id = response_data['data']['id'],
@@ -107,44 +123,15 @@ class AssessmentView(APIView):
                 }
 
                 return JsonResponse(payload, status=status.HTTP_200_OK)
+
             else:
-                return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                print('Invalid assessment type')
+                return JsonResponse({"error": "Invalid assessment type"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        except UserAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
 
-        else:
-            print('Invalid assessment type')
-            return JsonResponse({"error": "Invalid assessment type"}, status=status.HTTP_400_BAD_REQUEST)
-        # serializer = AssessmentSerializer(data=request.data)
-
-        # if serializer.is_valid():
-        #     data = serializer.validated_data
-        #     api_key = data['user']
-        #     hash_value = data['response']['hash']  # assuming 'hash' is part of response
-
-        #     # Make a POST request to the external API
-        #     response = requests.post(
-        #         "https://apiexpert.crystalblockchain.com/",
-        #         headers={"Apikey": api_key},
-        #         json={"type": data['type_of_assessment'], "hash": hash_value}
-        #     )
-
-        #     if response.status_code == 200:
-        #         # If request to external API is successful, save the instance
-        #         serializer.save()
-
-        #         # Prepare and return the response
-        #         return_data = {
-        #             "type": data['type_of_assessment'],
-        #             "hash": hash_value,
-        #             "riskscore": response.json()['riskscore'],  # assuming 'riskscore' is part of API response
-        #             "risk_signals": response.json()['risk_signals']  # assuming 'risk_signals' is part of API response
-        #         }
-
-        #         return JsonResponse(return_data, status=status.HTTP_200_OK)
-            
-        #     return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return JsonResponse({"extra-info": "CACILDA!", "request_data": request.data}, status=status.HTTP_200_OK)
+        # return JsonResponse({"extra-info": "CACILDA!", "request_data": request.data}, status=status.HTTP_200_OK)
 
 class CreateAPIKeyView(APIView):
     """
