@@ -1,1 +1,1 @@
-web: gunicorn infotidings.wsgi
+web: gunicorn andromeda.wsgi
