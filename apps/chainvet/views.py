@@ -63,6 +63,7 @@ class AssessmentView(APIView):
                     user.save()
                     new_assessment = Assessment(
                         assessment_id = response_data['data']['id'],
+                        user = user,
                         type_of_assessment = "address",
                         response_data = response_data,
                         status_assessment = response_data['data']['status']
