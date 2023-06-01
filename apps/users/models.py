@@ -75,6 +75,7 @@ class CustomAccountManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **other_fields)
         user.set_password(password)
+        user.is_active = True
         
         #Save user and associated person
         user.save()

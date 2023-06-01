@@ -237,8 +237,8 @@ DJOSER = {
     'SET_PASSWORD_RETYPE': True,
     'PASSWORD_RESET_CONFIRM_URL': 'reset-senha/confirm/{uid}/{token}',
     'USERNAME_RESET_CONFIRM_URL': 'reset-email/confirm/{uid}/{token}',
-    'ACTIVATION_URL': 'ativacao-de-conta/{uid}/{token}',
-    'SEND_ACTIVATION_EMAIL': True,
+    # 'ACTIVATION_URL': 'ativacao-de-conta/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False,
     'SERIALIZERS': {
         # 'user_create': 'apps.users.serializers.UserCreateSerializer',
         'user': 'apps.users.serializers.CustomUserSerializer',
@@ -249,7 +249,7 @@ DJOSER = {
     'LOGIN_AFTER_ACTIVATION': False,
     'USERNAME_REQUIRED': False,
     'EMAIL': {
-        'activation': 'emailAuthTemplates.email.ActivationEmail',
+        # 'activation': 'emailAuthTemplates.email.ActivationEmail',
         'confirmation': 'emailAuthTemplates.email.ConfirmationEmail',
         'password_reset': 'emailAuthTemplates.email.PasswordResetEmail',
         'password_changed_confirmation': 'emailAuthTemplates.email.PasswordChangedConfirmationEmail',
