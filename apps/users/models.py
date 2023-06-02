@@ -36,35 +36,6 @@ class CustomAccountManager(BaseUserManager):
         return self.create_user(email, password, **other_fields)
 
     def create_user(self, email, password, **other_fields):
-        # def create_new_organisation(organisation:dict) -> clinic_models.Clinic | corporate_models.Corporate:
-        #     organisation_type = organisation['organisation_type']
-        #     if organisation_type == 'corporate':
-        #         if not organisation['organisation_name']:
-        #             organisation['organisation_name'] = f'CorporateFrom[{email}]'
-        #         #Create a corporate for the user
-        #         new_organisation = corporate_models.Corporate(
-        #             nome = organisation['organisation_name'],
-        #             search_credits_daily = 10,
-        #         )
-        #         new_organisation.save()
-        #     elif organisation_type == 'clinic':
-        #         if not organisation['organisation_name']:
-        #             organisation['organisation_name'] = f'ClinicFrom[{email}]'
-        #         clinic_city_str = organisation['organisation_city']
-        #         clinic_city_name = clinic_city_str.split(',')[0].strip()
-        #         clinic_city_uf_str = clinic_city_str.split(',')[1].strip()
-        #         clinic_city_uf = clinic_models.UnidadeFederacao.objects.get(uf=clinic_city_uf_str)
-        #         clinic_city = clinic_models.Municipio.objects.get(nome=clinic_city_name, uf=clinic_city_uf)
-        #         #Create a clinic for the user
-        #         new_organisation = clinic_models.Clinic(
-        #             nome = organisation['organisation_name'],
-        #             endereco_municipio = clinic_city,
-        #             endereco_uf = clinic_city_uf,
-        #             email = email,
-        #         )
-        #         new_organisation.save()
-        #     return new_organisation
-
         if not email:
             raise ValueError(_('You must provide an email address'))
 
@@ -97,6 +68,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def number_of_api_keys(self):
+        from .models import ChainVetAPIKey
+        return ChainVetAPIKey.objects.filter(user=self).count()
 
     def set_tier(self, tier):
         from scripts.feature_access_control import set_tier_for_target

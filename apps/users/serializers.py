@@ -8,7 +8,7 @@ User = get_user_model()
 class CustomUserCreateSerializer(UserCreateSerializer): #Not being used. Look for users>models>CustomAccountManager>def create_user
     class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ['id','email','first_name','last_name', 'password',
+        fields = ['id','email', 'password',
                 ]
 
     def create(self, validated_data):
@@ -31,9 +31,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = tuple(User.REQUIRED_FIELDS) + (
             settings.USER_ID_FIELD,
             settings.LOGIN_FIELD,
-            # 'roles', #<--ADDED,
-            # 'tier', #<--ADDED,
-            # 'registration_form', #<--ADDED,
+            'start_date',
+            'api_credits',
+            'number_of_api_keys',
         ) 
         read_only_fields = (settings.LOGIN_FIELD,)
 
