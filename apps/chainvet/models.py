@@ -34,3 +34,15 @@ class Assessment(models.Model):
         formatted_time = self.time_of_request.strftime('%Y.%m.%d %Hh%Mm%Ss')
         return f'{formatted_time} - {self.type_of_assessment} - {self.assessment_id} - {self.status_assessment}'
 
+    def address_hash_short(self):
+        if self.address_hash:
+            return self.address_hash[:5]+'...'+self.address_hash[-5:]
+        else:
+            return '-'
+
+    def transaction_hash_short(self):
+        if self.transaction_hash and len(self.transaction_hash) > 1:
+            return self.transaction_hash[:5]+'...'+self.transaction_hash[-5:]
+        else:
+            return '-'
+

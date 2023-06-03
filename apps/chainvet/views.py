@@ -94,6 +94,7 @@ class AssessmentCreateWIthAPIKeyView(APIView):
                     assessment_id = response_data['data']['id'],
                 )
                 if request.data['assessment_type'] == "transaction":
+                    new_assessment.type_of_assessment = "transaction"
                     new_assessment.transaction_hash = tx
                     new_assessment.transaction_volume_coin = response_data['data']['amount']
                     new_assessment.transaction_volume_fiat = response_data['data']['fiat']
