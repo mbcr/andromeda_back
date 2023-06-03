@@ -47,8 +47,8 @@ DEBUG = env('DEBUG') == 'True'
 CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
 
 ALLOWED_HOSTS = [
-    # 'https://infotidings-back-end.herokuapp.com',
-    # 'https://infotidings-front-end.herokuapp.com',
+    'https://chainvet-frontend.herokuapp.com/',
+    'https://chainvet-backend.herokuapp.com/',
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:8000",
@@ -60,9 +60,8 @@ ALLOWED_HOSTS = [
 # ]
 
 CORS_ALLOWED_ORIGINS = [
-    # 'https://infotidings-back-end.herokuapp.com',
-    # 'https://infotidings-front-end.herokuapp.com',
-    'https://www.cliquemed.app',
+    'https://chainvet-frontend.herokuapp.com/',
+    'https://chainvet-backend.herokuapp.com/',
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
