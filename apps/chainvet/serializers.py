@@ -11,6 +11,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
 
 class AssessmentListSerializer(serializers.ModelSerializer):
     time_of_request = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
+    assessment_updated_at = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
     class Meta:
         model = Assessment
         fields = [
@@ -32,4 +33,5 @@ class AssessmentListSerializer(serializers.ModelSerializer):
             'transaction_volume_coin',
             'transaction_volume_fiat',
             'transaction_volume_fiat_currency_code',
+            
         ]

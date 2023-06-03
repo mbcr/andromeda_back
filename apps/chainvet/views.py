@@ -233,13 +233,13 @@ class AssessmentListView(APIView):
         serializer = AssessmentListSerializer(assessments, many=True)
         return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
 
-class AssessmentDetailView(APIView):
-    serializer_class = AssessmentSerializer
-    permission_classes = (IsAuthenticated,)
+# class AssessmentDetailView(APIView):
+#     serializer_class = AssessmentSerializer
+#     permission_classes = (IsAuthenticated,)
 
-    def get_object(self):
-        obj = get_object_or_404(Assessment, assessment_id=self.kwargs["assessment_id"], user=self.request.user)
-        return obj
+#     def get_object(self):
+#         obj = get_object_or_404(Assessment, assessment_id=self.kwargs["assessment_id"], user=self.request.user)
+#         return obj
 
 
 class CreateAPIKeyView(APIView):
