@@ -12,6 +12,11 @@ class AssessmentSerializer(serializers.ModelSerializer):
 class AssessmentListSerializer(serializers.ModelSerializer):
     time_of_request = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
     assessment_updated_at = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
+    risk_score = serializers.SerializerMethodField()
+
+    def get_risk_score(self, obj):
+        return f"{obj.risk_score * 100:.1f}%"
+
     class Meta:
         model = Assessment
         fields = [
