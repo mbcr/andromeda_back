@@ -123,19 +123,41 @@ class AssessmentCreateWIthAPIKeyView(APIView):
         except ChainVetAPIKey.DoesNotExist:
             return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
 
+# eth
+# 0x05ea2f2ea40287343ebefbf1c14eaacb94a5ba1544446af66d19314b3d74b7e9
+# 0xb2bde87dd389771a19040a8c21ee9a9e33d5454c
 class AssessmentCreateWIthUserView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         # print("chainvet>views>AssessmentView>post>Received request.data:")
-        # print(request.data)
+        # pprint(request.data)
+
+        def assessment_already_exists(bcb_request_data: dict) -> bool:
+            # print('chainvet>views>AssessmentView>assessment_already_exists>Checking if assessment already exists')
+            # pprint(bcb_request_data)
+            if request.data['assessment_type'] == "address":
+                request_transaction_hash = None
+            else:
+                request_transaction_hash = bcb_request_data['tx']
+
+            if Assessment.objects.filter(
+                    user = request.user,
+                    type_of_assessment = request.data['assessment_type'],
+                    address_hash = bcb_request_data['address'],
+                    currency = bcb_request_data['currency'],
+                    transaction_hash = request_transaction_hash
+                ).exists():
+                return True
+            else:
+                return False
 
         api_key = request.META.get("HTTP_X_API_KEY")
         user = request.user
         user_api_credits = user.api_credits
 
         if user_api_credits <= 0:
-            return JsonResponse({"error": "Insufficient API credits"}, status=status.HTTP_402_PAYMENT_REQUIRED)
+            return JsonResponse({"error_message": "Insufficient API credits"}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
         name = 'test_user'
         address = request.data['address']
@@ -160,9 +182,13 @@ class AssessmentCreateWIthUserView(APIView):
                 "currency": currency                
             }
         else:
-            print('Invalid assessment type')
-            return JsonResponse({"error": "Invalid assessment type"}, status=status.HTTP_400_BAD_REQUEST)
+            # print('Invalid assessment type')
+            return JsonResponse({"error_message": "Invalid assessment type."}, status=status.HTTP_400_BAD_REQUEST)
 
+        if assessment_already_exists(bcb_request_data):
+            # print('A coisa já existe. Returning 400 with message')
+            return JsonResponse({"error_message": f"Risk assessment for the {request.data['assessment_type']} already exists. Please check the dashboard's assessment table."}, status=status.HTTP_400_BAD_REQUEST)
+        # print('A coisa não existe. Continuando...'	)
         response = requests.post(
             "https://apiexpert.crystalblockchain.com/monitor/tx/add",
             headers={
