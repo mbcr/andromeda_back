@@ -175,7 +175,8 @@ class AssessmentCreateWIthUserView(APIView):
         pprint(response.json())
 
         if response.status_code != 200:
-            return JsonResponse({"error": "Unable to retrieve data from external API"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            error_message = response.json()['meta']['error_message']
+            return JsonResponse({"error": "Unable to retrieve data from external API", "error_message": error_message}, status=status.HTTP_400_BAD_REQUEST)
         
         response_data = response.json()
         with transaction.atomic():
