@@ -73,6 +73,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         from .models import ChainVetAPIKey
         return ChainVetAPIKey.objects.filter(user=self).count()
 
+    def number_of_valid_assessments(self):
+        from ..chainvet import models as chainvet_models
+        return chainvet_models.Assessment.objects.filter(user=self).count()
+
     def set_tier(self, tier):
         from scripts.feature_access_control import set_tier_for_target
         set_tier_for_target(self, tier)

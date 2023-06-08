@@ -34,6 +34,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'start_date',
             'api_credits',
             'number_of_api_keys',
+            'number_of_valid_assessments',
         ) 
         read_only_fields = (settings.LOGIN_FIELD,)
 
