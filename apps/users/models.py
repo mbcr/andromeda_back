@@ -108,3 +108,5 @@ class ChainVetAPIKey(AbstractAPIKey):
         on_delete=models.CASCADE,
         related_name="api_keys",
     )
+    revoked_at = models.DateTimeField(blank=True, null=True)
+    
