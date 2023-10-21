@@ -17,7 +17,7 @@ from pprint import pprint
 
 
 class CreditOwnerMixin:
-    def set_credit_cache(self, owner: CustomUser | AccessCode):
+    def set_credit_cache(self, owner):
         #TODO: Implement this function
         pass
     def create_new_order(self):
@@ -133,25 +133,33 @@ class AccessCode(models.Model, CreditOwnerMixin):
 
     def __str__(self):
         return self.code
-    
-    def update_credit_cache(self):
-        pass
-    
-
 
 
 class ChainVetAPIKey(AbstractAPIKey):
-    reference = models.CharField(max_length=32, unique=True)
-    owner_type = models.Choices(['User', 'AccessCode'])
+    reference = models.CharField(max_length=32, unique=True, blank=True, null=True)
+
+    class OwnerType(models.TextChoices):
+        USER = 'User', 'User'
+        ACCESSCODE = 'AccessCode', 'AccessCode'
+    owner_type = models.CharField(
+        max_length=10,
+        choices=OwnerType.choices,
+        default=OwnerType.USER,
+    )
+
     user = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
         related_name="api_keys",
+        null=True,
+        blank=True
     )
     access_code = models.ForeignKey(
         AccessCode,
         on_delete=models.CASCADE,
         related_name="api_keys",
+        null=True,
+        blank=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
     revoked_at = models.DateTimeField(blank=True, null=True)
