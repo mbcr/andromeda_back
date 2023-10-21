@@ -72,3 +72,5 @@ def feature_access_required_v2(view_has_access_control_function:bool=False, acce
             return view_func(request, *args, **kwargs)
         return wrapped_view
     return wrap
+
+

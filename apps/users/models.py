@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db.transaction import atomic
 
 #Imports for API Key Model
 from django.contrib.auth import get_user_model
@@ -12,8 +13,20 @@ from rest_framework_api_key.models import AbstractAPIKey
 # from ..corporate import models as corporate_models
 from ..utilities.olpFunctions import OLP_Functions
 
-
 from pprint import pprint
+
+
+class CreditOwnerMixin:
+    def set_credit_cache(self, owner: CustomUser | AccessCode):
+        #TODO: Implement this function
+        pass
+    def create_new_order(self):
+        #TODO: Implement this function
+        pass
+    def assign_credits_to_api(self):
+        #TODO: Implement this function
+        pass
+
 
 class CustomAccountManager(BaseUserManager):
     
@@ -52,14 +65,16 @@ class CustomAccountManager(BaseUserManager):
         user.save()
         return user
 
-class CustomUser(AbstractBaseUser, PermissionsMixin):
+class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     email = models.EmailField(_('email address'), unique=True)
     start_date = models.DateTimeField(default=timezone.now)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     registration_form = models.JSONField(null=True, blank=True)
 
-
+    ## Computed Fields
+    credits_paid_for = models.IntegerField(default=0)
+    credits_used = models.IntegerField(default=0)
     credits_available = models.IntegerField(default=0)
 
     objects = CustomAccountManager()
@@ -67,6 +82,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['registration_form']
 
+    # Functions
     def __str__(self):
         return self.email
 
@@ -78,6 +94,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         from ..chainvet import models as chainvet_models
         return chainvet_models.Assessment.objects.filter(user=self).count()
 
+    def update_credit_cache(self):
+        pass
+
+
+    ## Object level permission management functions
     def set_tier(self, tier):
         from scripts.feature_access_control import set_tier_for_target
         set_tier_for_target(self, tier)
@@ -100,14 +121,57 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         from django.contrib.auth.models import Group
         group = Group.objects.get(name=group_name)
         self.groups.add(group)
-        
+
+class AccessCode(models.Model, CreditOwnerMixin):
+    code = models.CharField(max_length=16, unique=True)
+    start_date = models.DateTimeField(default=timezone.now)
+
+    ## Computed Fields
+    credits_paid_for = models.IntegerField(default=0)
+    credits_used = models.IntegerField(default=0)
+    credits_available = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.code
+    
+    def update_credit_cache(self):
+        pass
+    
+
 
 
 class ChainVetAPIKey(AbstractAPIKey):
+    reference = models.CharField(max_length=32, unique=True)
+    owner_type = models.Choices(['User', 'AccessCode'])
     user = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
         related_name="api_keys",
     )
+    access_code = models.ForeignKey(
+        AccessCode,
+        on_delete=models.CASCADE,
+        related_name="api_keys",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
     revoked_at = models.DateTimeField(blank=True, null=True)
+
+    shares_credits_with_owner = models.BooleanField(default=False)
+    assigned_credits = models.IntegerField(default=0)
     
+    def __str__(self):
+        owner = f'User {user.email}' if user else f'AccessCode {access_code.code}'
+        return f'API Key {self.reference} for {owner}'
+    
+    def revert_credits_to_owner(self):
+        if self.shares_credits_with_owner:
+            owner = self.user if self.owner_type == 'User' else self.access_code
+            with atomic():
+                owner.credits_available += self.assigned_credits
+                self.assigned_credits = 0
+                self.shares_credits_with_owner = False
+                owner.save()
+                self.save()
+
+
+
