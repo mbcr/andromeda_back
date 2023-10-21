@@ -59,7 +59,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=False)
     registration_form = models.JSONField(null=True, blank=True)
 
-    api_credits = models.IntegerField(default=0)
+
+    credits_available = models.IntegerField(default=0)
 
     objects = CustomAccountManager()
 
