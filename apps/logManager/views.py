@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 
 from django.http import JsonResponse
 
-from .models import LandingPagePipelineLog
+from .models import AccessLog
 
 from pprint import pprint
 
@@ -57,7 +57,7 @@ def log_landing_page_usage(request):
             pprint(ip_data)
 
         try:
-            new_log = LandingPagePipelineLog(
+            new_log = AccessLog(
                 request_ip = request_ip,
                 # request_network = ip_data['network'],
                 location_country = ip_data['country_name'],
@@ -75,7 +75,7 @@ def log_landing_page_usage(request):
         except Exception as e:
             print('Error saving LandingPagePipelineLog: ',e)
             print(f'LandingPagePipelineLog> Error accessing API. log_type: {log_type} ; ip_data: {ip_data}')
-            new_log = LandingPagePipelineLog(
+            new_log = AccessLog(
                 request_ip = request_ip,
                 window_userAgent = window_data['userAgent'],
                 window_inner_height = window_data['innerHeight'],

@@ -21,7 +21,7 @@ class RequestEvent(models.Model):
     pass
 
 
-class LandingPagePipelineLog(models.Model):
+class AccessLog(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     request_ip = models.CharField(max_length=64,blank=True, null=True)
     request_network = models.CharField(max_length=64,blank=True, null=True)
@@ -32,6 +32,7 @@ class LandingPagePipelineLog(models.Model):
     window_userAgent = models.CharField(max_length=128,blank=True, null=True)
     window_inner_height = models.CharField(max_length=128,blank=True, null=True)
     window_inner_width = models.CharField(max_length=128,blank=True, null=True)
+    url = models.CharField(max_length=128,blank=True, null=True)
 
     log_type = models.CharField(max_length=128,blank=True, null=True)
 

@@ -1,7 +1,63 @@
 from django.db import models
-from apps.users.models import CustomUser
+from apps.users.models import CustomUser, AccessCode
 
 from django.db.models import JSONField
+from django.contrib.auth import get_user_model
+
+
+
+class PreOrder(models.Model):
+    class OwnerType(models.TextChoices):
+        USER = 'User', 'User'
+        ACCESSCODE = 'AccessCode', 'AccessCode'
+    owner_type = models.CharField(
+        max_length=10,
+        choices=OwnerType.choices,
+        default=OwnerType.USER,
+    )
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name = 'pre_orders'
+    )
+    access_code = models.ForeignKey(
+        AccessCode,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name = 'pre_orders'
+    )
+    initiated_at = models.DateTimeField(auto_now_add=True)
+    last_interaction = models.DateTimeField(auto_now=True, null=True, blank=True)
+    number_of_credits = models.IntegerField(default=0)
+    total_price_usd_cents = models.IntegerField(default=0)
+    payment_coin = models.CharField(max_length=10, null=True, blank=True)
+    payment_network = models.CharField(max_length=10, null=True, blank=True)
+    converted_to_order = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'PreOrder {self.id} - {self.initiated_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.owner_type} - Converted: {self.converted_to_order}'
+
+class Order(models.Model):
+    pre_order = models.ForeignKey(to=PreOrder, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    number_of_credits = models.IntegerField(default=0)
+    total_price_usd_cents = models.IntegerField(default=0)
+    payment_coin = models.CharField(max_length=10, null=True, blank=True)
+    payment_network = models.CharField(max_length=10, null=True, blank=True)
+    total_price_crypto = models.FloatField(default=0)
+    payment_is_direct = models.BooleanField(default=False)
+    payment_address = models.CharField(max_length=128, null=True, blank=True)
+    payment_memo = models.CharField(max_length=128, null=True, blank=True)
+    swap_details = JSONField(null=True, blank=True)
+    is_paid = models.BooleanField(default=False)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''
+        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.owner_type} - PAID: {self.is_paid} {paid_date}.'
 
 class Assessment(models.Model):
     TYPE_CHOICES = [

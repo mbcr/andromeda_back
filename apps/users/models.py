@@ -134,7 +134,6 @@ class AccessCode(models.Model, CreditOwnerMixin):
     def __str__(self):
         return self.code
 
-
 class ChainVetAPIKey(AbstractAPIKey):
     reference = models.CharField(max_length=32, unique=True, blank=True, null=True)
 
@@ -182,4 +181,30 @@ class ChainVetAPIKey(AbstractAPIKey):
                 self.save()
 
 
-
+class ClientLog(models.Model):
+    class OwnerType(models.TextChoices):
+        USER = 'User', 'User'
+        ACCESSCODE = 'AccessCode', 'AccessCode'
+    owner_type = models.CharField(
+        max_length=10,
+        choices=OwnerType.choices,
+        default=OwnerType.USER,
+    )
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="client_logs",
+        null=True,
+        blank=True
+    )
+    access_code = models.ForeignKey(
+        AccessCode,
+        on_delete=models.CASCADE,
+        related_name="client_logs",
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    ip_log = models.CharField(max_length=32, blank=True, null=True)
+    user_agent = models.CharField(max_length=128, blank=True, null=True)
+    device_info = models.JSONField(null=True, blank=True)
