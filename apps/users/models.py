@@ -11,16 +11,17 @@ from rest_framework_api_key.models import AbstractAPIKey
 
 from ..utilities.olpFunctions import OLP_Functions
 
-from apps.chainvet.models import Order
+from apps.chainvet.models import Order, PreOrder
 from pprint import pprint
 
 
 class CreditOwnerMixin:
     def set_credit_cache(self):
+        owner_type = self.owner_type()
         # Credits paid for
-        if self.owner_type() == 'User':
+        if owner_type == 'User':
             owner_orders = Order.objects.filter(pre_order__user = self)
-        elif self.owner_type() == 'AccessCode':
+        elif owner_type == 'AccessCode':
             owner_orders = Order.objects.filter(pre_order__access_code = self)
         else:
             print(f'Error: Owner type for {self} not recognised')
@@ -34,9 +35,22 @@ class CreditOwnerMixin:
         self.credits_available = self.credits_paid_for - self.credits_used
         # Save
         self.save()
-    def create_new_order(self):
-        #TODO: Implement this function
-        pass
+    def create_new_order(self, pre_order:PreOrder, anonpay_details:dict):
+        new_order, created = Order.objects.get_or_create(
+            pre_order=pre_order,
+            number_of_credits=pre_order.number_of_credits,
+            total_price_usd_cents=pre_order.total_price_usd_cents,
+            payment_coin=pre_order.payment_coin,
+            payment_network=pre_order.payment_network,
+            total_price_crypto=anonpay_details['total_price_crypto'],
+            payment_is_direct=anonpay_details['payment_is_direct'],
+            payment_address=anonpay_details['payment_address'],
+            payment_memo=anonpay_details['payment_memo'],
+            swap_details=anonpay_details['swap_details'],
+        )
+        if not created:
+            print(f'Order already exists for {pre_order}')
+
     def assign_credits_to_api(self):
         #TODO: Implement this function
         pass
