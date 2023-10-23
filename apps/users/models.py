@@ -9,17 +9,31 @@ from django.db.transaction import atomic
 from django.contrib.auth import get_user_model
 from rest_framework_api_key.models import AbstractAPIKey
 
-# from ..clinic import models as clinic_models
-# from ..corporate import models as corporate_models
 from ..utilities.olpFunctions import OLP_Functions
 
+from apps.chainvet.models import Order
 from pprint import pprint
 
 
 class CreditOwnerMixin:
-    def set_credit_cache(self, owner):
-        #TODO: Implement this function
-        pass
+    def set_credit_cache(self):
+        # Credits paid for
+        if self.owner_type() == 'User':
+            owner_orders = Order.objects.filter(pre_order__user = self)
+        elif self.owner_type() == 'AccessCode':
+            owner_orders = Order.objects.filter(pre_order__access_code = self)
+        else:
+            print(f'Error: Owner type for {self} not recognised')
+            return
+        orders_paid_for = owner_orders.filter(is_paid=True)
+        self.credits_paid_for = orders_paid_for.aggregate(models.Sum('number_of_credits'))['number_of_credits__sum'] or 0
+        # Credits used
+        owner_assessments = self.assessments.all().count()
+        self.credits_used = owner_assessments
+        # Credits available
+        self.credits_available = self.credits_paid_for - self.credits_used
+        # Save
+        self.save()
     def create_new_order(self):
         #TODO: Implement this function
         pass
@@ -94,8 +108,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
         from ..chainvet import models as chainvet_models
         return chainvet_models.Assessment.objects.filter(user=self).count()
 
-    def update_credit_cache(self):
-        pass
+    def owner_type(self):
+        return 'User'
 
 
     ## Object level permission management functions
@@ -133,6 +147,9 @@ class AccessCode(models.Model, CreditOwnerMixin):
 
     def __str__(self):
         return self.code
+    
+    def owner_type(self):
+        return 'AccessCode'
 
 class ChainVetAPIKey(AbstractAPIKey):
     reference = models.CharField(max_length=32, unique=True, blank=True, null=True)

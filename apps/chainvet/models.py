@@ -69,7 +69,8 @@ class Assessment(models.Model):
     time_of_request = models.DateTimeField(auto_now_add=True)
     response_data = JSONField()
     
-    user = models.ForeignKey(to=CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(to=CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='assessments')
+    access_code = models.ForeignKey(to=AccessCode, on_delete=models.CASCADE, null=True, blank=True, related_name='assessments')
     type_of_assessment = models.CharField(max_length=11, choices=TYPE_CHOICES)
     address_hash = models.CharField(max_length=128, null=True, blank=True)
     transaction_hash = models.CharField(max_length=128, null=True, blank=True)
