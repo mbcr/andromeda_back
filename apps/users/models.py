@@ -51,9 +51,32 @@ class CreditOwnerMixin:
         if not created:
             print(f'Order already exists for {pre_order}')
 
-    def assign_credits_to_api(self):
-        #TODO: Implement this function
-        pass
+    def assign_credits_to_api(self, api_key: 'ChainVetAPIKey', number_of_credits:int):
+        if api_key.revoked:
+            print(f"Error: API Key {api_key} is revoked, and therefore it can't be used anymore.")
+            return
+        if self.credits_available < number_of_credits:
+            print(f'Error: Not enough credits available for {self} ({self.credits_available}) to assign {number_of_credits} to {api_key}')
+            return
+        def self_is_api_key_owner():
+            api_key_owner_type = api_key.owner_type
+            if api_key_owner_type == 'User':
+                api_owner = api_key.user
+            elif api_key_owner_type == 'AccessCode':
+                api_owner = api_key.access_code
+            else:
+                print(f'Error: Owner type for {api_key} not recognised')
+                return
+            return api_owner == self
+        if not self_is_api_key_owner():
+            print(f'Error: {self} is not the owner of {api_key}, and therefore cannot assign credits to it.')
+            return
+        with atomic():
+            self.credits_available -= number_of_credits
+            api_key.assigned_credits += number_of_credits
+            self.save()
+            api_key.save()
+
 
 
 class CustomAccountManager(BaseUserManager):
