@@ -32,7 +32,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             settings.USER_ID_FIELD,
             settings.LOGIN_FIELD,
             'start_date',
-            'api_credits',
+            'set_credit_cache',
+            'credits_available',
             'number_of_api_keys',
             'number_of_valid_assessments',
         ) 

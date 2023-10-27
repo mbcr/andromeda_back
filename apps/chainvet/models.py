@@ -42,7 +42,7 @@ class Order(models.Model):
     pre_order = models.ForeignKey(to=PreOrder, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     number_of_credits = models.IntegerField(default=0)
-    total_price_usd_cents = models.IntegerField(default=0)
+    total_price_usd_cents = models.FloatField(default=0)
     payment_coin = models.CharField(max_length=10, null=True, blank=True)
     payment_network = models.CharField(max_length=10, null=True, blank=True)
     total_price_crypto = models.FloatField(default=0)
@@ -55,7 +55,7 @@ class Order(models.Model):
 
     def __str__(self):
         paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''
-        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.owner_type} - PAID: {self.is_paid} {paid_date}.'
+        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.pre_order.owner_type} - PAID: {self.is_paid} {paid_date}.'
 
 class Assessment(models.Model):
     TYPE_CHOICES = [

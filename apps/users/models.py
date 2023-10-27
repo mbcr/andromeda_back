@@ -35,6 +35,7 @@ class CreditOwnerMixin:
         self.credits_available = self.credits_paid_for - self.credits_used
         # Save
         self.save()
+        return self.credits_available
     def create_new_order(self, pre_order:PreOrder, anonpay_details:dict):
         new_order, created = Order.objects.get_or_create(
             pre_order=pre_order,
