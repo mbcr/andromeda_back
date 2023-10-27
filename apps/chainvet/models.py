@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import JSONField
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 
 
@@ -57,6 +58,8 @@ class Order(models.Model):
         paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''
         return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.pre_order.owner_type} - PAID: {self.is_paid} {paid_date}.'
 
+class AssessmentAdmin(admin.ModelAdmin):
+    list_filter = ['user', 'access_code', 'type_of_assessment']
 class Assessment(models.Model):
     TYPE_CHOICES = [
         ('address', 'Address'),
