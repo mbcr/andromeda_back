@@ -117,6 +117,8 @@ class CustomAccountManager(BaseUserManager):
         user.save()
         return user
 
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     email = models.EmailField(_('email address'), unique=True)
     start_date = models.DateTimeField(default=timezone.now)
@@ -143,7 +145,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
         return ChainVetAPIKey.objects.filter(user=self).count()
 
     def number_of_valid_assessments(self):
-        from ..chainvet import models as chainvet_models
+        from apps.chainvet import models as chainvet_models
         return chainvet_models.Assessment.objects.filter(user=self).count()
 
     def owner_type(self):
