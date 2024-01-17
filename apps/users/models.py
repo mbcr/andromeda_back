@@ -16,7 +16,7 @@ from pprint import pprint
 
 
 class CreditOwnerMixin:
-    def set_credit_cache(self):
+    def set_credit_cache(self): # Sets the computed fields for a credit owner instance (CustomUser or AccessCode)
         owner_type = self.owner_type()
         # Credits paid for
         if owner_type == 'User':
@@ -51,7 +51,6 @@ class CreditOwnerMixin:
         )
         if not created:
             print(f'Order already exists for {pre_order}')
-
     def assign_credits_to_api(self, api_key: 'ChainVetAPIKey', number_of_credits:int):
         if api_key.revoked:
             print(f"Error: API Key {api_key} is revoked, and therefore it can't be used anymore.")
@@ -83,7 +82,6 @@ class CreditOwnerMixin:
 class CustomAccountManager(BaseUserManager):
     
     def create_superuser(self, email, password, **other_fields):
-
         other_fields.setdefault('is_staff', True)
         other_fields.setdefault('is_superuser', True)
         other_fields.setdefault('is_active', True)
@@ -116,8 +114,6 @@ class CustomAccountManager(BaseUserManager):
         #Save user and associated person
         user.save()
         return user
-
-
 
 class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     email = models.EmailField(_('email address'), unique=True)
@@ -156,7 +152,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     def set_tier(self, tier):
         from scripts.feature_access_control import set_tier_for_target
         set_tier_for_target(self, tier)
-
     def tier(self):
         from scripts.feature_access_control import Tier_1, Tier_2
         tier_1_access_count = len(Tier_1().access_codes)
@@ -169,8 +164,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
             return 2
         if authorisations_count == tier_1_access_count:
             return 1
-        return 0
-        
+        return 0    
     def add_to_group(self, group_name):
         from django.contrib.auth.models import Group
         group = Group.objects.get(name=group_name)
@@ -179,6 +173,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
 class AccessCode(models.Model, CreditOwnerMixin):
     code = models.CharField(max_length=16, unique=True)
     start_date = models.DateTimeField(default=timezone.now)
+    email = models.EmailField(null=True, blank=True)
 
     ## Computed Fields
     credits_paid_for = models.IntegerField(default=0)
@@ -224,9 +219,16 @@ class ChainVetAPIKey(AbstractAPIKey):
     assigned_credits = models.IntegerField(default=0)
     
     def __str__(self):
-        owner = f'User {user.email}' if user else f'AccessCode {access_code.code}'
-        return f'API Key {self.reference} for {owner}'
-    
+        if self.owner_type == 'User':
+            user = self.user
+            owner = f'User {user.email}'
+        elif self.owner_type == 'AccessCode':
+            access_code = self.access_code
+            owner = f'AccessCode {access_code.code}'
+        else:
+            owner = 'Unknown'
+        return f"API Key '{self.reference}' for {owner} - ({self.hashed_key[:5]}...{self.hashed_key[-5:]})"
+
     def revert_credits_to_owner(self):
         if self.shares_credits_with_owner:
             owner = self.user if self.owner_type == 'User' else self.access_code

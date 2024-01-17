@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser, ChainVetAPIKey
+from .models import CustomUser, ChainVetAPIKey, AccessCode
 
 from django import forms
 from django.contrib import admin
@@ -48,6 +48,7 @@ class GroupAdmin(origGroupAdmin):
 admin.site.unregister(Group)
 admin.site = admin.AdminSite(name='my_admin')
 admin.site.register(Group, GroupAdmin)
+admin.site.register(AccessCode)
 admin.site.register(ChainVetAPIKey)
 
 # class RoleAdminForm(forms.ModelForm):
@@ -84,6 +85,4 @@ class UserAdminConfig(UserAdmin):
             }
          ),
     )
-
-
 admin.site.register(CustomUser, UserAdminConfig)
