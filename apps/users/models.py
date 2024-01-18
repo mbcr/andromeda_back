@@ -11,7 +11,7 @@ from rest_framework_api_key.models import AbstractAPIKey
 
 from ..utilities.olpFunctions import OLP_Functions
 
-from apps.chainvet.models import Order, PreOrder
+from apps.chainvet.models import Order
 from pprint import pprint
 
 
@@ -36,7 +36,7 @@ class CreditOwnerMixin:
         # Save
         self.save()
         return self.credits_available
-    def create_new_order(self, pre_order:PreOrder, anonpay_details:dict):
+    def create_new_order(self, anonpay_details:dict):
         new_order, created = Order.objects.get_or_create(
             pre_order=pre_order,
             number_of_credits=pre_order.number_of_credits,
@@ -76,7 +76,6 @@ class CreditOwnerMixin:
             api_key.assigned_credits += number_of_credits
             self.save()
             api_key.save()
-
 
 
 class CustomAccountManager(BaseUserManager):
@@ -239,7 +238,6 @@ class ChainVetAPIKey(AbstractAPIKey):
                 owner.save()
                 self.save()
 
-
 class ClientLog(models.Model):
     class OwnerType(models.TextChoices):
         USER = 'User', 'User'
@@ -267,3 +265,12 @@ class ClientLog(models.Model):
     ip_log = models.CharField(max_length=32, blank=True, null=True)
     user_agent = models.CharField(max_length=128, blank=True, null=True)
     device_info = models.JSONField(null=True, blank=True)
+
+class Affiliate(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='affiliate')
+    created_at = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+    affiliate_code = models.CharField(max_length=8, unique=True, blank=True, null=True)
+
+
+
