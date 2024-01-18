@@ -5,41 +5,6 @@ from django.contrib.auth import get_user_model
 
 
 
-# class PreOrder(models.Model):
-#     class OwnerType(models.TextChoices):
-#         USER = 'User', 'User'
-#         ACCESSCODE = 'AccessCode', 'AccessCode'
-
-#     owner_type = models.CharField(
-#         max_length=10,
-#         choices=OwnerType.choices,
-#         default=OwnerType.USER,
-#     )
-#     user = models.ForeignKey(
-#         'users.CustomUser',
-#         on_delete=models.CASCADE,
-#         null=True,
-#         blank=True,
-#         related_name = 'pre_orders'
-#     )
-#     access_code = models.ForeignKey(
-#         'users.AccessCode',
-#         on_delete=models.CASCADE,
-#         null=True,
-#         blank=True,
-#         related_name = 'pre_orders'
-#     )
-#     initiated_at = models.DateTimeField(auto_now_add=True)
-#     last_interaction = models.DateTimeField(auto_now=True, null=True, blank=True)
-#     number_of_credits = models.IntegerField(default=0)
-#     total_price_usd_cents = models.IntegerField(default=0)
-#     payment_coin = models.CharField(max_length=10, null=True, blank=True)
-#     payment_network = models.CharField(max_length=10, null=True, blank=True)
-#     converted_to_order = models.BooleanField(default=False)
-
-#     def __str__(self):
-#         return f'PreOrder {self.id} - {self.initiated_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.owner_type} - Converted: {self.converted_to_order}'
-
 class Order(models.Model):
     class OwnerType(models.TextChoices):
         USER = 'User', 'User'
@@ -64,7 +29,6 @@ class Order(models.Model):
         blank=True,
         related_name = 'pre_orders'
     )
-    # pre_order = models.ForeignKey(to=PreOrder, on_delete=models.SET_NULL, null=True, blank=True)
     order_id = models.CharField(max_length=12, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     affiliate = models.ForeignKey(to='users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
@@ -84,7 +48,7 @@ class Order(models.Model):
 
     def __str__(self):
         paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''
-        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.pre_order.owner_type} - PAID: {self.is_paid} {paid_date}.'
+        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.owner_type} - PAID: {self.is_paid} {paid_date}.'
 
 class AssessmentAdmin(admin.ModelAdmin):
     list_filter = ['user', 'access_code', 'type_of_assessment']
