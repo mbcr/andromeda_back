@@ -23,7 +23,6 @@ import logging
 
 class AssessmentCreateWIthAPIKeyView(APIView):
     permission_classes = [HasChainVetAPIKey]
-
     def post(self, request):
         # print("chainvet>views>AssessmentView>post>Received request.data:")
         # print(request.data)
@@ -299,6 +298,75 @@ class DeleteAPIKeyView(APIView):
         except ChainVetAPIKey.DoesNotExist:
             return JsonResponse({"detail": "API Key not found"}, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['POST'])
+def create_new_assessment_for_access_code(request):
+    # Check if necessary data is present
+    if not request.data.get('access_code'):
+        return Response({"detail": "Missing access_code parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('assessment_type'):
+        return Response({"detail": "Missing assessment_type parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('address'):
+        return Response({"detail": "Missing address parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('currency'):
+        return Response({"detail": "Missing currency parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if request.data.get('assessment_type') == "transaction" and not request.data.get('tx_hash'):
+        return Response({"detail": "Missing tx_hash parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Identify who's making the request (must have a valid API Key OR be authenticated)
+    api_key = request.META.get("HTTP_X_API_KEY")
+    if api_key: # WITH APIKey
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            if api_key_instance.revoked:
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+            requesting_user_type = api_key_instance.owner_type
+            if requesting_user_type == "User":
+                requesting_user = api_key_instance.user
+            elif requesting_user_type == "AccessCode":
+                requesting_user = api_key_instance.access_code
+            else:
+                return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
+        except ChainVetAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+    else: # WITHOUT APIKey
+        if request.user.is_authenticated:
+            requesting_user_type = "User"
+            requesting_user = request.user
+        else:
+            return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
+
+    authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
+    target_access_code = request.data.get('access_code')
+    target_entity = authorised_access_codes_list.get(code=target_access_code)
+
+    if not target_entity:
+        return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        creation_result = target_entyty.create_new_assessment(
+            assessment_type = request.data.get('assessment_type'),
+            address = request.data.get('address'),
+            currency = request.data.get('currency'),
+            tx_hash = request.data.get('tx_hash'),
+        )
+        if creation_resultget('status') == 'Success':
+            return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
+        else:
+            return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger = logging.getLogger('error_logger')
+        log_data = {
+            'requesting_user_type': requesting_user_type,
+            'requesting_user': str(requesting_user),
+            'access_code': target_access_code,
+            'assessment_type': request.data.get('assessment_type'),
+            'address': request.data.get('address'),
+            'currency': request.data.get('currency'),
+            'tx_hash': request.data.get('tx_hash'),
+        }
+        logger.debug(f'apps.chainvet.views: create_new_assessment_for_access_code; error location code: 4J9Y1; log_data: {log_data}; error message: {str(e)}')
+        return Response({"detail": "Failure to create new assessment. Please contact support with error code 4J9Y1."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
 def create_new_order(request):    
@@ -442,6 +510,7 @@ def check_access_code_status(request):
     payload = user_serializers.AccessCodeFullSerializer(target_entity).data
     return Response(payload, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
 def check_self_status(request):
     # Identify who's making the request (must have a valid API Key OR be authenticated)
     api_key = request.META.get("HTTP_X_API_KEY")
@@ -479,6 +548,7 @@ def check_self_status(request):
         logger.debug(f'apps.chainvet.views: check_self_status; error location code: 4W9Y2; log_data: {log_data}; error message: {str(e)}')
         return Response({"detail": "Failure to fetch user data. Please contact support with error code 4W9Y2."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
 def check_assessment_list_for_access_code(request):
     # Check if necessary data is present
     if not request.data.get('access_code'):

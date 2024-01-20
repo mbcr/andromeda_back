@@ -14,6 +14,8 @@ from ..utilities.olpFunctions import OLP_Functions
 
 from apps.chainvet.models import Order
 from pprint import pprint
+import logging
+
 
 
 class CreditOwnerMixin:
@@ -80,6 +82,166 @@ class CreditOwnerMixin:
             api_key.assigned_credits += number_of_credits
             self.save()
             api_key.save()
+    def create_new_assessment(self, assessment_type:str, address:str, currency:str, tx_hash:str=None):
+        def assessment_already_exists(cbc_request_data: dict) -> bool:
+            if assessment_type == "address":
+                request_transaction_hash = None
+            else:
+                request_transaction_hash = cbc_request_data['tx']
+
+            if Assessment.objects.filter(
+                    user = request.user,
+                    type_of_assessment = request.data['assessment_type'],
+                    address_hash = cbc_request_data['address'],
+                    currency = cbc_request_data['currency'],
+                    transaction_hash = request_transaction_hash
+                ).exists():
+                return True
+            else:
+                return False
+        
+        error_logger = logging.getLogger('error_logger')
+
+        # Parameter checks
+        if assessment_type not in ['address', 'transaction']:
+            return {
+                'status': 'Error',
+                'message': f"Error: assessment_type must be either 'address' or 'transaction'. Value provided = {assessment_type}"
+            }
+
+        # Check if there are enough credits available
+        available_credits = self.set_credit_cache()
+        if available_credits < 1:
+            payload = {
+                'status': 'Error',
+                'message': f'Not enough credits available for {str(self)} to create a new assessment.'
+            }
+            return payload
+        
+        # Set name based on owner type
+        if self.owner_type() == 'User':
+            name = f"Client {self.id}"
+        elif self.owner_type() == 'AccessCode':
+            name = f"Client AC {self.code}"
+        else:
+            return {
+                'status': 'Error',
+                'message': f'Owner type for {self} not recognised'
+            }
+        
+        # Check if tx data is provided
+        if assessment_type == 'transaction':
+            if not tx:
+                return {
+                    'status': 'Error',
+                    'message': f'No transaction hash provided for transaction assessment.'
+                }
+
+        # Prepare the request data for the CBC API
+        if assessment_type == "address":
+            direction = "withdrawal"
+            cbc_request_data = {
+                "direction": direction,
+                "address": address,
+                "name": name,
+                "currency": currency
+            }
+        else:
+            direction = "deposit"
+            tx = tx_hash
+            cbc_request_data = {
+                "direction": direction,
+                "address": address,
+                "tx": tx,
+                "name": name,
+                "currency": currency                
+            }
+
+        # Check if assessment already exists
+        if assessment_already_exists(cbc_request_data):
+            return {
+                'status': 'Error',
+                'message': f'Assessment already exists for {cbc_request_data}'
+            }
+        # Make request to CBC API
+        response = requests.post(
+            "https://apiexpert.crystalblockchain.com/monitor/tx/add",
+            headers={
+                "accept": "application/json",
+                "X-Auth-Apikey": settings.CRYSTAL_API_KEY
+            },
+            data= cbc_request_data
+        )
+
+        # Check if request was successful
+        if response.status_code != 200:
+            error_message = response.json()['meta']['error_message']
+            return {
+                'status': 'Error',
+                'message': f'Unable to retrieve data from external API. Error message: {error_message}'
+            }
+        response_data = response.json()
+
+        # Initiate atomic transaction to ensure the client is only charged if the assessment is successfully created
+        try:
+            with atomic():
+                available_credits -= 1
+                self.api_credits = available_credits
+                self.save()
+                updated_at_datetime = datetime.utcfromtimestamp(response_data['data']['updated_at'])
+                new_assessment = Assessment(
+                    assessment_updated_at = updated_at_datetime,
+                    currency = currency,
+                    address_hash = address,
+                    user = user,
+                    type_of_assessment = "address",
+                    response_data = response_data,
+
+                    risk_grade = response_data['data']['alert_grade'],
+                    risk_score = response_data['data']['riskscore'],
+                    risk_signals = response_data['data']['signals'],
+                    status_assessment = response_data['data']['status'],
+                    assessment_id = response_data['data']['id'],
+                )
+                if assessment_type == "transaction":
+                    new_assessment.transaction_hash = tx
+                    new_assessment.transaction_volume_coin = response_data['data']['amount']
+                    new_assessment.transaction_volume_fiat = response_data['data']['fiat']
+                    new_assessment.transaction_volume_fiat_currency_code = response_data['data']['fiat_code_effective']
+                    new_assessment.risk_volume_coin = response_data['data']['risky_volume']
+                    new_assessment.risk_volume_fiat = response_data['data']['risky_volume_fiat']
+                new_assessment.save()
+        except Exception as e:
+            logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error creating new assessment for {str(self)} after CBC request, with data: {cbc_request_data}. Error: {e}')
+            return {
+                'status': 'Error',
+                'message': f'Error creating new assessment for {str(self)} with data: {cbc_request_data}'
+            }
+
+        # Prepare response payload
+        payload = {
+            "user_remaining_credits": available_credits,
+            "type": "address",
+            "hash": address,
+            "assessment_status": response_data['data']['status'],
+            "risk_grade": response_data['data']['alert_grade'],
+            "risk_score": response_data['data']['riskscore'],
+            "risk_signals": response_data['data']['signals']
+        }
+        if assessment_type == "transaction":
+            payload['type'] = "transaction"
+            payload['transaction_hash'] = tx
+            payload['risk_volume_coin'] = response_data['data']['risky_volume']
+            payload['risk_volume_fiat'] = response_data['data']['risky_volume_fiat']
+            payload['risk_volume_fiat_currency_code'] = response_data['data']['fiat_code_effective']
+
+        # If here, the assessment was successfully created. Return payload
+        return {
+            'status': 'Success',
+            'message': f'New Assessment created for client {str(self)} with data: {cbc_request_data}',
+            'payload': payload
+        }
+
 
 class CustomAccountManager(BaseUserManager):
     
