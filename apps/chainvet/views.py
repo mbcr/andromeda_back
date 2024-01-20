@@ -1,21 +1,24 @@
-import requests
 from django.conf import settings
+from django.db import transaction
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
-# from rest_framework.response import Response
-
+from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-from apps.users.permissions import HasChainVetAPIKey
+# from rest_framework.response import Response
 
-from django.db import transaction
+
+from apps.users.permissions import HasChainVetAPIKey
 from .models import Assessment
-from .serializers import AssessmentSerializer, AssessmentListSerializer
+from .serializers import AssessmentSerializer, AssessmentListSerializer, OrderSerializer
 from apps.users.models import ChainVetAPIKey
+from apps.users import models as user_models
 
 from pprint import pprint
 from datetime import datetime
+import requests
+import logging
 
 class AssessmentCreateWIthAPIKeyView(APIView):
     permission_classes = [HasChainVetAPIKey]
@@ -268,7 +271,6 @@ class AssessmentListView(APIView):
 #         obj = get_object_or_404(Assessment, assessment_id=self.kwargs["assessment_id"], user=self.request.user)
 #         return obj
 
-
 class CreateAPIKeyView(APIView):
     """
     A view that allows authenticated users to create new API keys.
@@ -296,5 +298,67 @@ class DeleteAPIKeyView(APIView):
         except ChainVetAPIKey.DoesNotExist:
             return JsonResponse({"detail": "API Key not found"}, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['POST'])
+def create_new_order(request):    
+    # Check if necessary data is present
+    if not request.data.get('number_of_credits'):
+        return Response({"detail": "Missing number_of_credits parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('crypto_coin'):
+        return Response({"detail": "Missing crypto_coin parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if request.data.get('order_is_for_self') == None:
+        return Response({"detail": "Missing order_is_for_self parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Identify who's making the request (must have a valid API Key OR be authenticated)
+    api_key = request.META.get("HTTP_X_API_KEY")
+    if api_key: # WITH APIKey
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            if api_key_instance.revoked:
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+            requesting_user_type = api_key_instance.owner_type
+            if requesting_user_type == "User":
+                requesting_user = api_key_instance.user
+            elif requesting_user_type == "AccessCode":
+                requesting_user = api_key_instance.access_code
+            else:
+                return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
+        except ChainVetAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+    else: # WITHOUT APIKey
+        if request.user.is_authenticated:
+            requesting_user_type = "User"
+            requesting_user = request.user
+        else:
+            return Response({"detail": "Invalid credentials. Please log in"}, status=status.HTTP_403_FORBIDDEN)
+
+    # Identify who the order is for
+    order_is_for_self = request.data.get('order_is_for_self')
+    if order_is_for_self:
+        target_user = requesting_user
+    else: # Check if the access code exists, and create a new one if it doesn't
+        access_code = request.data.get('access_code')
+        if access_code:
+            try:
+                target_user = user_models.AccessCode.objects.get(code=access_code).user
+            except user_models.AccessCode.DoesNotExist:
+                return Response({"detail": "Invalid access code"}, status=status.HTTP_400_BAD_REQUEST)
+        else: # Create new access code
+            new_access_code = user_models.AccessCode.objects.create()
+            target_user = new_access_code
+
+    try: # Create the new order from the target user's entity and return payload
+        new_order = target_user.create_new_order_v1(
+            number_of_credits = request.data.get('number_of_credits'),
+            crypto_coin = request.data.get('crypto_coin')
+        )
+        payload = OrderSerializer(new_order).data
+        return Response(payload, status=status.HTTP_201_CREATED)
+    except Exception as e: # Log and return
+        error_logger = logging.getLogger('error_logger') 
+        log_data = {key: request.data[key] for key in ['number_of_credits', 'crypto_coin', 'order_is_for_self', 'access_code'] if key in request.data}
+        error_logger.debug(f'apps.chainvet.views: create_new_order; error location code: HY58S; request.data: {log_data}; error message: {str(e)}')
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 

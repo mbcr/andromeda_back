@@ -183,6 +183,48 @@ AUTHENTICATION_BACKENDS = (
 GUARDIAN_AUTO_PREFETCH = False # False is default
 
 
+### LOGGING - START ###
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime} - {levelname}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'error_log_handler': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.FileHandler',
+            'filename': 'errors.log',
+            'formatter': 'verbose',
+        },
+        'request_timing': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',  # Use TimedRotatingFileHandler
+            'filename': 'request_timing.log',
+            'formatter': 'verbose',
+            'when': 'midnight',  # Rotate at midnight
+            'interval': 1,  # Every day
+            'backupCount': 7,  # Keep 7 days worth
+        },
+    },
+    'loggers': {
+        'error_logger': {
+            'handlers': ['error_log_handler'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'request_timing': {
+            'handlers': ['request_timing'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    }
+}
+### LOGGING - END ###
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 

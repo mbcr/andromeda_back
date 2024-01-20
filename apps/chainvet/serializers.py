@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Assessment
+from .models import Assessment, Order
 
 from rest_framework import serializers
 from datetime import datetime
@@ -38,5 +38,25 @@ class AssessmentListSerializer(serializers.ModelSerializer):
             'transaction_volume_coin',
             'transaction_volume_fiat',
             'transaction_volume_fiat_currency_code',
-            
+        ]
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = [
+            'order_id',
+            'created_at',
+            'affiliate',
+            'number_of_credits',
+            'total_price_usd_cents',
+            'payment_coin',
+            'payment_network',
+            'total_price_crypto',
+            'payment_address',
+            'payment_memo',
+            'swap_details',
+            'status',
+            'is_paid',
+            'paid_at',
         ]

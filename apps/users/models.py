@@ -1,9 +1,10 @@
-from django.db import models
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db import models
 from django.db.transaction import atomic
+from django.utils import timezone
+from django.utils.crypto import get_random_string
+from django.utils.translation import gettext_lazy as _
 
 #Imports for API Key Model
 from django.contrib.auth import get_user_model
@@ -36,7 +37,7 @@ class CreditOwnerMixin:
         # Save
         self.save()
         return self.credits_available
-    def create_new_order(self, anonpay_details:dict):
+    def create_new_order_v0(self, anonpay_details:dict):
         new_order, created = Order.objects.get_or_create(
             pre_order=pre_order,
             number_of_credits=pre_order.number_of_credits,
@@ -51,6 +52,9 @@ class CreditOwnerMixin:
         )
         if not created:
             print(f'Order already exists for {pre_order}')
+    def create_new_order_v1(self, number_of_credits:int, crypto_coin:str):
+        # To be implemented
+        pass
     def assign_credits_to_api(self, api_key: 'ChainVetAPIKey', number_of_credits:int):
         if api_key.revoked:
             print(f"Error: API Key {api_key} is revoked, and therefore it can't be used anymore.")
@@ -76,7 +80,6 @@ class CreditOwnerMixin:
             api_key.assigned_credits += number_of_credits
             self.save()
             api_key.save()
-
 
 class CustomAccountManager(BaseUserManager):
     
@@ -182,6 +185,19 @@ class AccessCode(models.Model, CreditOwnerMixin):
     def __str__(self):
         return self.code
     
+    def generate_unique_code(self):
+        length = 16
+        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        while True:
+            code = get_random_string(length, chars)
+            if not AccessCode.objects.filter(code=code).exists():
+                return code
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = self.generate_unique_code()
+        super(AccessCode, self).save(*args, **kwargs)
+
     def owner_type(self):
         return 'AccessCode'
 
