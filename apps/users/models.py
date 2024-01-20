@@ -52,7 +52,7 @@ class CreditOwnerMixin:
         )
         if not created:
             print(f'Order already exists for {pre_order}')
-    def create_new_order_v1(self, number_of_credits:int, crypto_coin:str):
+    def create_new_order_v1(self, number_of_credits:int, crypto_coin:str, affiliate_code:str=None):
         # To be implemented
         pass
     def assign_credits_to_api(self, api_key: 'ChainVetAPIKey', number_of_credits:int):
@@ -123,6 +123,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     registration_form = models.JSONField(null=True, blank=True)
+    affiliate_origin = models.OneToOneField('users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True)
 
     ## Computed Fields
     credits_paid_for = models.IntegerField(default=0)
@@ -137,6 +138,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     # Functions
     def __str__(self):
         return self.email
+
+    def save(self, *args, **kwargs):
+        if not self.affiliate:
+            self.affiliate = Affiliate.objects.create(
+                user=self
+            )
+        super(AccessCode, self).save(*args, **kwargs)
 
     def number_of_api_keys(self):
         from .models import ChainVetAPIKey
@@ -176,6 +184,7 @@ class AccessCode(models.Model, CreditOwnerMixin):
     code = models.CharField(max_length=16, unique=True)
     start_date = models.DateTimeField(default=timezone.now)
     email = models.EmailField(null=True, blank=True)
+    affiliate_origin = models.OneToOneField('users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True)
 
     ## Computed Fields
     credits_paid_for = models.IntegerField(default=0)
@@ -288,5 +297,15 @@ class Affiliate(models.Model):
     active = models.BooleanField(default=True)
     affiliate_code = models.CharField(max_length=8, unique=True, blank=True, null=True)
 
+    def generate_unique_code(self):
+        length = 16
+        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        while True:
+            code = get_random_string(length, chars)
+            if not Affiliate.objects.filter(code=code).exists():
+                return code
 
-
+    def save(self, *args, **kwargs):
+        if not self.affiliate_code:
+            self.affiliate_code = self.generate_unique_code()
+        super(Affiliate, self).save(*args, **kwargs)

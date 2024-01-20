@@ -338,19 +338,22 @@ def create_new_order(request):
         target_user = requesting_user
     else: # Check if the access code exists, and create a new one if it doesn't
         access_code = request.data.get('access_code')
-        if access_code:
+        if access_code: # Check if the access code is valid, otherwise return error
             try:
                 target_user = user_models.AccessCode.objects.get(code=access_code).user
             except user_models.AccessCode.DoesNotExist:
                 return Response({"detail": "Invalid access code"}, status=status.HTTP_400_BAD_REQUEST)
         else: # Create new access code
-            new_access_code = user_models.AccessCode.objects.create()
+            new_access_code = user_models.AccessCode.objects.create(
+                affiliate_origin=requesting_user.affiliate,
+            )
             target_user = new_access_code
 
     try: # Create the new order from the target user's entity and return payload
         new_order = target_user.create_new_order_v1(
             number_of_credits = request.data.get('number_of_credits'),
-            crypto_coin = request.data.get('crypto_coin')
+            crypto_coin = request.data.get('crypto_coin'),
+            affiliate_code = requesting_user.affiliate.affiliate_code if requesting_user_type == 'User' else None,
         )
         payload = OrderSerializer(new_order).data
         return Response(payload, status=status.HTTP_201_CREATED)
@@ -360,8 +363,6 @@ def create_new_order(request):
         error_logger.debug(f'apps.chainvet.views: create_new_order; error location code: HY58S; request.data: {log_data}; error message: {str(e)}')
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-
-# Copilot, create a check_order_status endpoint
 
 @api_view(['POST'])
 def check_order_status(request):
@@ -403,5 +404,7 @@ def check_order_status(request):
     payload = OrderSerializer(order).data
     return Response(payload, status=status.HTTP_200_OK)
 
-
+@api_view(['POST'])
+def check_credit_owner_status(request):
+    pass
 
