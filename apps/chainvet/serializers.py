@@ -1,8 +1,41 @@
 from rest_framework import serializers
 from .models import Assessment, Order
+from apps.users import models as user_models
 
 from rest_framework import serializers
 from datetime import datetime
+
+class AccessCodeFullSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField()
+    assessments = serializers.SerializerMethodField()
+    list_of_api_keys_references = serializers.SerializerMethodField()
+
+    def get_access_code_orders(self, obj):
+        return OrderSerializer(obj.orders, many=True).data
+    def get_access_code_assessments(self, obj):
+        return list(obj.assessments.values_list('assessment_id', flat=True))
+    def get_list_of_api_keys_references(self, obj):
+        return list(obj.api_keys.values_list('reference', flat=True))
+    
+    class Meta:
+        model = user_models.AccessCode
+        fields = [
+            'code',
+            'start_date',
+            'email',
+            'affiliate_origin',
+            'credits_paid_for',
+            'credits_used',
+            'credits_available',
+            'orders',
+            'assessments',
+            'list_of_api_keys_references',
+        ]
+
+    def to_representation(self, instance):
+        # Update credit cache before serialization
+        instance.set_credit_cache()
+        return super(AccessCodeFullSerializer, self).to_representation(instance)
 
 class AssessmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,6 +73,36 @@ class AssessmentListSerializer(serializers.ModelSerializer):
             'transaction_volume_fiat_currency_code',
         ]
 
+class CustomUserFullSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField()
+    assessments = serializers.SerializerMethodField()
+    list_of_api_keys_references = serializers.SerializerMethodField()
+
+    def get_access_code_orders(self, obj):
+        return OrderSerializer(obj.orders, many=True).data
+    def get_access_code_assessments(self, obj):
+        return list(obj.assessments.values_list('assessment_id', flat=True))
+    def get_list_of_api_keys_references(self, obj):
+        return list(obj.api_keys.values_list('reference', flat=True))
+    
+    class Meta:
+        model = user_models.CustomUser
+        fields = [
+            'start_date',
+            'email',
+            'affiliate_origin',
+            'credits_paid_for',
+            'credits_used',
+            'credits_available',
+            'orders',
+            'assessments',
+            'list_of_api_keys_references',
+        ]
+
+    def to_representation(self, instance):
+        # Update credit cache before serialization
+        instance.set_credit_cache()
+        return super(CustomUserFullSerializer, self).to_representation(instance)
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:

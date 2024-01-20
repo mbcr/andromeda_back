@@ -20,16 +20,16 @@ class Order(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name = 'pre_orders'
+        related_name = 'orders'
     )
     access_code = models.ForeignKey(
         'users.AccessCode',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name = 'pre_orders'
+        related_name = 'orders'
     )
-    order_id = models.CharField(max_length=12, unique=True)
+    order_id = models.CharField(max_length=12, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     affiliate = models.ForeignKey(to='users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     last_interaction = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -58,7 +58,7 @@ class Assessment(models.Model):
         ('transaction', 'Transaction'),
     ]
 
-    assessment_id = models.CharField(max_length=100, unique=True)
+    assessment_id = models.CharField(max_length=100, unique=True, db_index=True)
     time_of_request = models.DateTimeField(auto_now_add=True)
     response_data = JSONField()
     

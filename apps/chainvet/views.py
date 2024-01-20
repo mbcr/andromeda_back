@@ -14,6 +14,7 @@ from .models import Assessment
 from .serializers import AssessmentSerializer, AssessmentListSerializer, OrderSerializer
 from apps.users.models import ChainVetAPIKey
 from apps.users import models as user_models
+from apps.users import serializers as user_serializers
 
 from pprint import pprint
 from datetime import datetime
@@ -405,6 +406,77 @@ def check_order_status(request):
     return Response(payload, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-def check_credit_owner_status(request):
-    pass
+def check_access_code_status(request):
+    # Check if necessary data is present
+    if not request.data.get('access_code'):
+        return Response({"detail": "Missing access_code parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Identify who's making the request (must have a valid API Key OR be authenticated)
+    api_key = request.META.get("HTTP_X_API_KEY")
+    if api_key: # WITH APIKey
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            if api_key_instance.revoked:
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+            requesting_user_type = api_key_instance.owner_type
+            if requesting_user_type == "User":
+                requesting_user = api_key_instance.user
+            elif requesting_user_type == "AccessCode":
+                requesting_user = api_key_instance.access_code
+            else:
+                return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
+        except ChainVetAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+    else: # WITHOUT APIKey
+        if request.user.is_authenticated:
+            requesting_user_type = "User"
+            requesting_user = request.user
+        else:
+            return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
+    
+    authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
+    target_access_code = request.data.get('access_code')
+    target_entity = authorised_access_codes_list.get(code=target_access_code)
+
+    if not target_entity:
+        return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
+    payload = user_serializers.AccessCodeFullSerializer(target_entity).data
+    return Response(payload, status=status.HTTP_200_OK)
+
+def check_self_status(request):
+    # Identify who's making the request (must have a valid API Key OR be authenticated)
+    api_key = request.META.get("HTTP_X_API_KEY")
+    if api_key: # WITH APIKey
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            if api_key_instance.revoked:
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+            requesting_user_type = api_key_instance.owner_type
+            if requesting_user_type == "User":
+                requesting_user = api_key_instance.user
+            elif requesting_user_type == "AccessCode":
+                requesting_user = api_key_instance.access_code
+            else:
+                return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
+        except ChainVetAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+    else: # WITHOUT APIKey
+        if request.user.is_authenticated:
+            requesting_user_type = "User"
+            requesting_user = request.user
+        else:
+            return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        serializer_type = user_serializers.AccessCodeFullSerializer if requesting_user_type == "AccessCode" else user_serializers.CustomUserSerializer
+        payload = serializer_type(requesting_user).data
+        return Response(payload, status=status.HTTP_200_OK)
+    except:
+        logger = logging.getLogger('error_logger')
+        log_data = {
+            'requesting_user_type': requesting_user_type,
+            'requesting_user': str(requesting_user),
+        }
+        logger.debug(f'apps.chainvet.views: check_self_status; error location code: 4W9Y2; log_data: {log_data}; error message: {str(e)}')
+        return Response({"detail": "Failure to fetch user data. Please contact support with error code 4W9Y2."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

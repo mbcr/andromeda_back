@@ -181,7 +181,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
         self.groups.add(group)
 
 class AccessCode(models.Model, CreditOwnerMixin):
-    code = models.CharField(max_length=16, unique=True)
+    code = models.CharField(max_length=16, unique=True, db_index=True)
     start_date = models.DateTimeField(default=timezone.now)
     email = models.EmailField(null=True, blank=True)
     affiliate_origin = models.OneToOneField('users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True)
