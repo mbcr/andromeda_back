@@ -361,4 +361,47 @@ def create_new_order(request):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
+# Copilot, create a check_order_status endpoint
+
+@api_view(['POST'])
+def check_order_status(request):
+    # Check if necessary data is present
+    if not request.data.get('order_id'):
+        return Response({"detail": "Missing order_id parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Identify who's making the request (must have a valid API Key OR be authenticated)
+    api_key = request.META.get("HTTP_X_API_KEY")
+    if api_key: # WITH APIKey
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            if api_key_instance.revoked:
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+            requesting_user_type = api_key_instance.owner_type
+            if requesting_user_type == "User":
+                requesting_user = api_key_instance.user
+            elif requesting_user_type == "AccessCode":
+                requesting_user = api_key_instance.access_code
+            else:
+                return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
+        except ChainVetAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+    else: # WITHOUT APIKey
+        if request.user.is_authenticated:
+            requesting_user_type = "User"
+            requesting_user = request.user
+        else:
+            return Response({"detail": "Invalid credentials. Please log in"}, status=status.HTTP_403_FORBIDDEN)
+
+    # Identify the order
+    order_id = request.data.get('order_id')
+    try:
+        order = user_models.Order.objects.get(order_id=order_id)
+    except user_models.Order.DoesNotExist:
+        return Response({"detail": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Send the order back
+    payload = OrderSerializer(order).data
+    return Response(payload, status=status.HTTP_200_OK)
+
+
 
