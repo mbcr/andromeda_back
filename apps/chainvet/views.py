@@ -343,7 +343,7 @@ def create_new_assessment_for_access_code(request):
         return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        creation_result = target_entyty.create_new_assessment(
+        creation_result = target_entity.create_new_assessment(
             assessment_type = request.data.get('assessment_type'),
             address = request.data.get('address'),
             currency = request.data.get('currency'),
@@ -367,6 +367,67 @@ def create_new_assessment_for_access_code(request):
         logger.debug(f'apps.chainvet.views: create_new_assessment_for_access_code; error location code: 4J9Y1; log_data: {log_data}; error message: {str(e)}')
         return Response({"detail": "Failure to create new assessment. Please contact support with error code 4J9Y1."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+def create_new_assessment_for_user(request):
+    # Check if necessary data is present
+    if not request.data.get('assessment_type'):
+        return Response({"detail": "Missing assessment_type parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('address'):
+        return Response({"detail": "Missing address parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('currency'):
+        return Response({"detail": "Missing currency parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if request.data.get('assessment_type') == "transaction" and not request.data.get('tx_hash'):
+        return Response({"detail": "Missing tx_hash parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Identify who's making the request (must have a valid API Key OR be authenticated)
+    api_key = request.META.get("HTTP_X_API_KEY")
+    if api_key: # WITH APIKey
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            if api_key_instance.revoked:
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+            requesting_user_type = api_key_instance.owner_type
+            if requesting_user_type == "User":
+                requesting_user = api_key_instance.user
+            elif requesting_user_type == "AccessCode":
+                requesting_user = api_key_instance.access_code
+            else:
+                return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
+        except ChainVetAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+    else: # WITHOUT APIKey
+        if request.user.is_authenticated:
+            requesting_user_type = "User"
+            requesting_user = request.user
+        else:
+            return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
+
+    if not requesting_user:
+        return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        creation_result = requesting_user.create_new_assessment(
+            assessment_type = request.data.get('assessment_type'),
+            address = request.data.get('address'),
+            currency = request.data.get('currency'),
+            tx_hash = request.data.get('tx_hash'),
+        )
+        if creation_resultget('status') == 'Success':
+            return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
+        else:
+            return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger = logging.getLogger('error_logger')
+        log_data = {
+            'requesting_user_type': requesting_user_type,
+            'requesting_user': str(requesting_user),
+            'assessment_type': request.data.get('assessment_type'),
+            'address': request.data.get('address'),
+            'currency': request.data.get('currency'),
+            'tx_hash': request.data.get('tx_hash'),
+        }
+        logger.debug(f'apps.chainvet.views: create_new_assessment_for_user; error location code: 4J9Y2; log_data: {log_data}; error message: {str(e)}')
+        return Response({"detail": "Failure to create new assessment. Please contact support with error code 4J9Y2."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 def create_new_order(request):    
