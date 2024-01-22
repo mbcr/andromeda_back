@@ -544,8 +544,9 @@ def check_order_status(request):
         authorised_orders_list = target_entity.orders
     else:
         # user= requesting_user OR affiliate= requesting_user.affiliate
+        owner_filter = Q(user=requesting_user) if requesting_user_type == "User" else Q(access_code=requesting_user)
         authorised_orders_list = user_models.Order.objects.filter(
-                                    Q(user=requesting_user) | 
+                                    owner_filter | 
                                     Q(affiliate=requesting_user.affiliate)
                                 )
         
