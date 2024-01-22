@@ -131,6 +131,12 @@ class OrderSerializer(serializers.ModelSerializer):
             representation['affiliate']= instance.affiliate.affiliate_code
         owner_type = instance.owner_type
         representation['owner_type'] = owner_type
-        representation['owner'] = str(instance.user) if owner_type == 'User' else str(instance.access_code)
+        if owner_type == 'User':
+            owner_str = str(instance.user)
+        else:
+            owner_str_start = str(instance.access_code)[:2]
+            owner_str_end = str(instance.access_code)[-2:]
+            owner_str = f'{owner_str_start}...{owner_str_end}'
+        representation['owner'] =  owner_str
         return representation
         
