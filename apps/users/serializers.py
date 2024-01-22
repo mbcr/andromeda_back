@@ -1,7 +1,7 @@
 from djoser.serializers import UserCreateSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import ModelSerializer
-from .models import CustomUser
+from .models import CustomUser, AccessCode
 
 User = get_user_model()
 
@@ -53,3 +53,22 @@ class CustomUserSerializer(serializers.ModelSerializer):
 #         model = CustomUser
 #         fields = ['id','email','first_name','last_name','start_date','is_staff','is_active','roles','corporateGroupPK']
 #         read_only_fields = ['id']
+
+class AccessCodeFullSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessCode
+        fields = [
+            'code',
+            'start_date',
+            'email',
+            'credits_paid_for',
+            'credits_used',
+            'credits_available',
+            'affiliate_origin',
+        ]
+    
+    def to_representation(self, instance):
+        instance.set_credit_cache()
+        representation = super().to_representation(instance)
+        representation['affiliate_origin'] = instance.affiliate_origin.affiliate_code
+        return representation
