@@ -12,10 +12,12 @@ from rest_framework_api_key.models import AbstractAPIKey
 
 from ..utilities.olpFunctions import OLP_Functions
 
-from apps.chainvet.models import Order
+from apps.chainvet.models import Order, Assessment
+
 from pprint import pprint
 import logging
 import requests
+from datetime import datetime
 
 
 def get_price_in_usd_cents(number_of_credits:int):
@@ -123,14 +125,11 @@ class CreditOwnerMixin:
                 request_transaction_hash = None
             else:
                 request_transaction_hash = cbc_request_data['tx']
-
-            if Assessment.objects.filter(
-                    user = request.user,
-                    type_of_assessment = request.data['assessment_type'],
-                    address_hash = cbc_request_data['address'],
-                    currency = cbc_request_data['currency'],
-                    transaction_hash = request_transaction_hash
-                ).exists():
+            assessment_query = Assessment.objects.filter(type_of_assessment=assessment_type,address_hash=cbc_request_data['address'],currency=cbc_request_data['currency'])
+            if assessment_type == "transaction":
+                assessment_query = assessment_query.filter(transaction_hash=request_transaction_hash) 
+            assessment_query_for_owner = assessment_query.filter(access_code = self) if self.owner_type() == 'AccessCode' else assessment_query.filter(user = self)
+            if assessment_query_for_owner.exists():
                 return True
             else:
                 return False
@@ -152,10 +151,9 @@ class CreditOwnerMixin:
                 'message': f'Not enough credits available for {str(self)} to create a new assessment.'
             }
             return payload
-        
         # Set name based on owner type
         if self.owner_type() == 'User':
-            name = f"Client {self.id}"
+            name = f"Client {self.email}"
         elif self.owner_type() == 'AccessCode':
             name = f"Client AC {self.code}"
         else:
@@ -198,6 +196,9 @@ class CreditOwnerMixin:
                 'status': 'Error',
                 'message': f'Assessment already exists for {cbc_request_data}'
             }
+        
+        print('CreditOwnerMixin.create_new_assessment. External API call is being mocked')
+        ### COMMENTED OUT FOR MOCKING
         # # Make request to CBC API
         # response = requests.post(
         #     "https://apiexpert.crystalblockchain.com/monitor/tx/add",
@@ -251,7 +252,13 @@ class CreditOwnerMixin:
                     }
                 ],
                 'status': 'ready',
-                'id': f"MockAssessment#{Assessment.objects.all().count()}"
+                'id': f"MockAssessment#{Assessment.objects.all().count()+1}",
+                'amount': 2,
+                'fiat': 123,
+                'fiat_code_effective': 'usd',
+                'risky_volume': 0.8,
+                'risky_volume_fiat': 123,
+
             }
         }
 
@@ -266,16 +273,18 @@ class CreditOwnerMixin:
                     assessment_updated_at = updated_at_datetime,
                     currency = currency,
                     address_hash = address,
-                    user = user,
                     type_of_assessment = "address",
-                    response_data = response_data,
-
+                    response_data = {},
                     risk_grade = response_data['data']['alert_grade'],
                     risk_score = response_data['data']['riskscore'],
                     risk_signals = response_data['data']['signals'],
                     status_assessment = response_data['data']['status'],
                     assessment_id = response_data['data']['id'],
                 )
+                if self.owner_type() == 'User':
+                    new_assessment.user = self
+                else:
+                    new_assessment.access_code = self
                 if assessment_type == "transaction":
                     new_assessment.transaction_hash = tx
                     new_assessment.transaction_volume_coin = response_data['data']['amount']
@@ -284,8 +293,13 @@ class CreditOwnerMixin:
                     new_assessment.risk_volume_coin = response_data['data']['risky_volume']
                     new_assessment.risk_volume_fiat = response_data['data']['risky_volume_fiat']
                 new_assessment.save()
+            from apps.chainvet.serializers import AssessmentListSerializer
+            return {
+                'status': 'Success',
+                'payload': AssessmentListSerializer(new_assessment).data,
+            }
         except Exception as e:
-            logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error creating new assessment for {str(self)} after CBC request, with data: {cbc_request_data}. Error: {e}')
+            error_logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error creating new assessment for {str(self)} after CBC request, with data: {cbc_request_data}. Error: {e}')
             return {
                 'status': 'Error',
                 'message': f'Error creating new assessment for {str(self)} with data: {cbc_request_data}'

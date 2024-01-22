@@ -301,6 +301,7 @@ class DeleteAPIKeyView(APIView):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def create_new_assessment_for_access_code(request):
+    logger = logging.getLogger('error_logger')
     # Check if necessary data is present
     if not request.data.get('access_code'):
         return Response({"detail": "Missing access_code parameter"}, status=status.HTTP_400_BAD_REQUEST)
@@ -350,7 +351,7 @@ def create_new_assessment_for_access_code(request):
             currency = request.data.get('currency'),
             tx_hash = request.data.get('tx_hash'),
         )
-        if creation_resultget('status') == 'Success':
+        if creation_result.get('status') == 'Success':
             return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
         else:
             return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
@@ -366,7 +367,7 @@ def create_new_assessment_for_access_code(request):
             'tx_hash': request.data.get('tx_hash'),
         }
         logger.debug(f'apps.chainvet.views: create_new_assessment_for_access_code; error location code: 4J9Y1; log_data: {log_data}; error message: {str(e)}')
-        return Response({"detail": "Failure to create new assessment. Please contact support with error code 4J9Y1."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"detail": f"Failure to create new assessment. Please contact support with error code 4J9Y1. Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

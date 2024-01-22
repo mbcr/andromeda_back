@@ -102,7 +102,7 @@ class Assessment(models.Model):
 
     def address_hash_short(self):
         if self.address_hash:
-            return self.address_hash[:5]+'...'+self.address_hash[-5:]
+            return self.address_hash[:4]+'...'+self.address_hash[-4:]
         else:
             return '-'
 
