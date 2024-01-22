@@ -2,7 +2,7 @@ from djoser.serializers import UserCreateSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import ModelSerializer
 from .models import CustomUser, AccessCode
-from apps.chainvet.serializers import OrderSerializer
+from apps.chainvet.serializers import OrderSerializer, AssessmentListSerializer
 
 User = get_user_model()
 
@@ -29,15 +29,13 @@ from djoser.compat import get_user_email, get_user_email_field_name
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User # <- Redirects the model to the custom user model (see line 6)
-        fields = tuple(User.REQUIRED_FIELDS) + (
-            settings.USER_ID_FIELD,
-            settings.LOGIN_FIELD,
+        fields = [
             'start_date',
-            'set_credit_cache',
+            'email',
+            'credits_paid_for',
+            'credits_used',
             'credits_available',
-            'number_of_api_keys',
-            'number_of_valid_assessments',
-        ) 
+        ]
         read_only_fields = (settings.LOGIN_FIELD,)
 
     def update(self, instance, validated_data):
@@ -48,6 +46,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
                 instance.is_active = False
                 instance.save(update_fields=["is_active"])
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        instance.set_credit_cache()
+        representation = super().to_representation(instance)
+        representation['api_keys'] = [api_key.reference for api_key in instance.api_keys.all()]
+        representation['orders'] = [OrderSerializer(order).data for order in instance.orders.all()]
+        representation['assessments'] = [AssessmentListSerializer(assessment).data for assessment in instance.assessments.all()]
+        return representation
 
 # class CustomUserSerializer(ModelSerializer):
 #     class Meta:
@@ -74,4 +80,5 @@ class AccessCodeFullSerializer(serializers.ModelSerializer):
         representation['affiliate_origin'] = instance.affiliate_origin.affiliate_code
         representation['api_keys'] = [api_key.reference for api_key in instance.api_keys.all()]
         representation['orders'] = [OrderSerializer(order).data for order in instance.orders.all()]
+        representation['assessments'] = [AssessmentListSerializer(assessment).data for assessment in instance.assessments.all()]
         return representation
