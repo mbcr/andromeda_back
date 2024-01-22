@@ -133,9 +133,10 @@ class OrderSerializer(serializers.ModelSerializer):
         if owner_type == 'User':
             owner_str = str(instance.user)
         else:
-            owner_str_start = str(instance.access_code)[:2]
-            owner_str_end = str(instance.access_code)[-2:]
-            owner_str = f'{owner_str_start}...{owner_str_end}'
+            # owner_str_start = str(instance.access_code)[:2]
+            # owner_str_end = str(instance.access_code)[-2:]
+            # owner_str = f'{owner_str_start}...{owner_str_end}'
+            owner_str = str(instance.access_code)
         representation['owner'] =  owner_str
         return representation
         
