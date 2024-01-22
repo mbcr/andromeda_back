@@ -591,9 +591,9 @@ def check_access_code_status(request):
     
     authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
     target_access_code = request.data.get('access_code')
-    target_entity = authorised_access_codes_list.get(code=target_access_code)
-
-    if not target_entity:
+    try:
+        target_entity = authorised_access_codes_list.get(code=target_access_code)
+    except user_models.AccessCode.DoesNotExist:
         return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
     payload = user_serializers.AccessCodeFullSerializer(target_entity).data
     return Response(payload, status=status.HTTP_200_OK)

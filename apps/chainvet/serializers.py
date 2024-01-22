@@ -105,7 +105,6 @@ class CustomUserFullSerializer(serializers.ModelSerializer):
         return super(CustomUserFullSerializer, self).to_representation(instance)
 
 class OrderSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Order
         fields = [

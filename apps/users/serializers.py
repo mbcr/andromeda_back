@@ -2,6 +2,7 @@ from djoser.serializers import UserCreateSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import ModelSerializer
 from .models import CustomUser, AccessCode
+from apps.chainvet.serializers import OrderSerializer
 
 User = get_user_model()
 
@@ -71,4 +72,6 @@ class AccessCodeFullSerializer(serializers.ModelSerializer):
         instance.set_credit_cache()
         representation = super().to_representation(instance)
         representation['affiliate_origin'] = instance.affiliate_origin.affiliate_code
+        representation['api_keys'] = [api_key.reference for api_key in instance.api_keys.all()]
+        representation['orders'] = [OrderSerializer(order).data for order in instance.orders.all()]
         return representation
