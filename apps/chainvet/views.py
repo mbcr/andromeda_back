@@ -674,7 +674,10 @@ def check_assessment_list_for_access_code(request):
 
     authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
     target_access_code = request.data.get('access_code')
-    target_entity = authorised_access_codes_list.get(code=target_access_code)
+    try:
+        target_entity = authorised_access_codes_list.get(code=target_access_code)
+    except user_models.AccessCode.DoesNotExist:
+        return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
 
     if not target_entity:
         return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -682,6 +685,8 @@ def check_assessment_list_for_access_code(request):
     try:
         assessment_id_list = request.data.get('assessment_id_list')
         assessment_list = target_entity.assessments.filter(assessment_id__in=assessment_id_list)
+        if not assessment_list:
+            return Response({"detail": "No assessments found"}, status=status.HTTP_404_NOT_FOUND)
         payload = AssessmentListSerializer(assessment_list, many=True).data
         return Response(payload, status=status.HTTP_200_OK)
     except:
