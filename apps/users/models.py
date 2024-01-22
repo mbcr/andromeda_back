@@ -15,6 +15,7 @@ from ..utilities.olpFunctions import OLP_Functions
 from apps.chainvet.models import Order
 from pprint import pprint
 import logging
+import requests
 
 
 
@@ -163,24 +164,62 @@ class CreditOwnerMixin:
                 'status': 'Error',
                 'message': f'Assessment already exists for {cbc_request_data}'
             }
-        # Make request to CBC API
-        response = requests.post(
-            "https://apiexpert.crystalblockchain.com/monitor/tx/add",
-            headers={
-                "accept": "application/json",
-                "X-Auth-Apikey": settings.CRYSTAL_API_KEY
-            },
-            data= cbc_request_data
-        )
+        # # Make request to CBC API
+        # response = requests.post(
+        #     "https://apiexpert.crystalblockchain.com/monitor/tx/add",
+        #     headers={
+        #         "accept": "application/json",
+        #         "X-Auth-Apikey": settings.CRYSTAL_API_KEY
+        #     },
+        #     data= cbc_request_data
+        # )
 
-        # Check if request was successful
-        if response.status_code != 200:
-            error_message = response.json()['meta']['error_message']
-            return {
-                'status': 'Error',
-                'message': f'Unable to retrieve data from external API. Error message: {error_message}'
+        # # Check if request was successful
+        # if response.status_code != 200:
+        #     error_message = response.json()['meta']['error_message']
+        #     return {
+        #         'status': 'Error',
+        #         'message': f'Unable to retrieve data from external API. Error message: {error_message}'
+        #     }
+        # response_data = response.json()
+        response_data = {
+            'data': {
+                'updated_at': 1624291200,
+                'alert_grade': 'C',
+                'riskscore': 0.1,
+                'signals': [
+                     {
+                        "atm": 0.0,
+                        "child_exploitation": 0.0,
+                        "dark_market": 0.0,
+                        "dark_service": 0.0,
+                        "enforcement_action": 0.0,
+                        "exchange_fraudulent": 0.0,
+                        "exchange_licensed": 1.0,
+                        "exchange_unlicensed": 0.0,
+                        "gambling": 0.0,
+                        "illegal_service": 0.0,
+                        "liquidity_pools": 0.0,
+                        "marketplace": 0.0,
+                        "miner": 0.0,
+                        "mixer": 0.0,
+                        "other": 0.0,
+                        "p2p_exchange_licensed": 0.0,
+                        "p2p_exchange_unlicensed": 0.0,
+                        "payment": 0.0,
+                        "ransom": 0.0,
+                        "sanctions": 0.0,
+                        "scam": 0.0,
+                        "seized_assets": 0.0,
+                        "stolen_coins": 0.0,
+                        "terrorism_financing": 0.0,
+                        "wallet": 0.0
+                    }
+                ],
+                'status': 'ready',
+                'id': f"MockAssessment#{Assessment.objects.all().count()}"
             }
-        response_data = response.json()
+        }
 
         # Initiate atomic transaction to ensure the client is only charged if the assessment is successfully created
         try:
@@ -241,7 +280,26 @@ class CreditOwnerMixin:
             'message': f'New Assessment created for client {str(self)} with data: {cbc_request_data}',
             'payload': payload
         }
-
+    def create_new_api_key(self, reference:str=None):
+        if len(reference) > 32:
+            return {
+                'status': 'Error',
+                'message': f"API Key reference '{reference}' is too long. Maximum length is 32 characters."
+            }
+        owner_type = self.owner_type()
+        new_api_key = ChainVetAPIKey.objects.create(
+            reference = reference,
+            owner_type = owner_type,
+            user = owner if owner_type == 'User' else None,
+            access_code = owner if owner_type == 'AccessCode' else None,
+            shares_credits_with_owner = True,
+        )
+        return {
+            'status': 'Success',
+            'message': f"New API Key created for {owner_type} {owner}.",
+            'api_key_reference': new_api_key.reference,
+            'api_key': new_api_key
+        }
 
 class CustomAccountManager(BaseUserManager):
     
@@ -306,7 +364,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
             self.affiliate = Affiliate.objects.create(
                 user=self
             )
-        super(AccessCode, self).save(*args, **kwargs)
+        super(CustomUser, self).save(*args, **kwargs)
 
     def number_of_api_keys(self):
         from .models import ChainVetAPIKey
@@ -464,10 +522,13 @@ class Affiliate(models.Model):
         chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
         while True:
             code = get_random_string(length, chars)
-            if not Affiliate.objects.filter(code=code).exists():
+            if not Affiliate.objects.filter(affiliate_code=code).exists():
                 return code
 
     def save(self, *args, **kwargs):
         if not self.affiliate_code:
             self.affiliate_code = self.generate_unique_code()
         super(Affiliate, self).save(*args, **kwargs)
+    
+    def __str__(self):
+        return f'Affiliate {self.affiliate_code}'
