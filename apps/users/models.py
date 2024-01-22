@@ -41,9 +41,9 @@ class CreditOwnerMixin:
         owner_type = self.owner_type()
         # Credits paid for
         if owner_type == 'User':
-            owner_orders = Order.objects.filter(pre_order__user = self)
+            owner_orders = Order.objects.filter(user = self)
         elif owner_type == 'AccessCode':
-            owner_orders = Order.objects.filter(pre_order__access_code = self)
+            owner_orders = Order.objects.filter(access_code = self)
         else:
             print(f'Error: Owner type for {self} not recognised')
             return
@@ -466,7 +466,7 @@ class AccessCode(models.Model, CreditOwnerMixin):
         return 'AccessCode'
 
 class ChainVetAPIKey(AbstractAPIKey):
-    reference = models.CharField(max_length=32, unique=True, blank=True, null=True)
+    reference = models.CharField(max_length=32, blank=True, null=True)
 
     class OwnerType(models.TextChoices):
         USER = 'User', 'User'
