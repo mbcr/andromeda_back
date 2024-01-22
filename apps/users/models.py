@@ -567,7 +567,7 @@ class Affiliate(models.Model):
     affiliate_code = models.CharField(max_length=8, unique=True, blank=True, null=True)
 
     def generate_unique_code(self):
-        length = 16
+        length = 8
         chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
         while True:
             code = get_random_string(length, chars)
