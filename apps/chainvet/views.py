@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
@@ -7,7 +8,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 
 from apps.users.permissions import HasChainVetAPIKey
 from .models import Assessment
@@ -299,6 +299,7 @@ class DeleteAPIKeyView(APIView):
             return JsonResponse({"detail": "API Key not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_new_assessment_for_access_code(request):
     # Check if necessary data is present
     if not request.data.get('access_code'):
@@ -368,6 +369,7 @@ def create_new_assessment_for_access_code(request):
         return Response({"detail": "Failure to create new assessment. Please contact support with error code 4J9Y1."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_new_assessment_for_user(request):
     # Check if necessary data is present
     if not request.data.get('assessment_type'):
@@ -502,6 +504,7 @@ def create_new_order(request):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def check_order_status(request):
     # Check if necessary data is present
     if not request.data.get('order_id'):
@@ -530,10 +533,25 @@ def check_order_status(request):
         else:
             return Response({"detail": "Invalid credentials. Please log in"}, status=status.HTTP_403_FORBIDDEN)
 
+    # Get authorised orders list
+    if requesting_user_type == "AccessCode":
+        target_access_code = request.data.get('access_code')
+        try:
+            target_entity = user_models.AccessCode.objects.get(code=target_access_code)
+        except user_models.AccessCode.DoesNotExist:
+            return Response({"detail": "Invalid access_code"}, status=status.HTTP_400_BAD_REQUEST)
+        authorised_orders_list = target_entity.orders
+    else:
+        # user= requesting_user OR affiliate= requesting_user.affiliate
+        authorised_orders_list = user_models.Order.objects.filter(
+                                    Q(user=requesting_user) | 
+                                    Q(affiliate=requesting_user.affiliate)
+                                )
+        
     # Identify the order
     order_id = request.data.get('order_id')
     try:
-        order = user_models.Order.objects.get(order_id=order_id)
+        order = authorised_orders_list.get(order_id=order_id)
     except user_models.Order.DoesNotExist:
         return Response({"detail": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -542,6 +560,7 @@ def check_order_status(request):
     return Response(payload, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def check_access_code_status(request):
     # Check if necessary data is present
     if not request.data.get('access_code'):
@@ -580,6 +599,7 @@ def check_access_code_status(request):
     return Response(payload, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def check_self_status(request):
     # Identify who's making the request (must have a valid API Key OR be authenticated)
     api_key = request.META.get("HTTP_X_API_KEY")
@@ -618,6 +638,7 @@ def check_self_status(request):
         return Response({"detail": "Failure to fetch user data. Please contact support with error code 4W9Y2."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def check_assessment_list_for_access_code(request):
     # Check if necessary data is present
     if not request.data.get('access_code'):
