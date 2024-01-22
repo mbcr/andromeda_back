@@ -18,6 +18,23 @@ import logging
 import requests
 
 
+def get_price_in_usd_cents(number_of_credits:int):
+    price_per_credit_in_usd_cents = 500 # Get price for different tiers from database
+    #Run some processing
+    total_price_in_usd_cents = number_of_credits * price_per_credit_in_usd_cents
+    return int(total_price_in_usd_cents)
+
+def fetch_price_in_crypto(number_of_credits:int, payment_coin:str, payment_network:str):
+    total_price_in_usd_cents = get_price_in_usd_cents(number_of_credits)
+    convert_price_to_crypto = 0.002 * total_price_in_usd_cents # Implement a function to use an external API with value, payment coin and network, and return a value in crypto
+    price_in_crypto = convert_price_to_crypto
+    return price_in_crypto
+
+def fetch_payment_address_and_memo():
+    payment_address = '0x1234567890' # Implement logic
+    payment_memo = '' # Implement logic
+    return payment_address, payment_memo
+
 
 class CreditOwnerMixin:
     def set_credit_cache(self): # Sets the computed fields for a credit owner instance (CustomUser or AccessCode)
@@ -55,9 +72,26 @@ class CreditOwnerMixin:
         )
         if not created:
             print(f'Order already exists for {pre_order}')
-    def create_new_order_v1(self, number_of_credits:int, crypto_coin:str, affiliate_code:str=None):
-        # To be implemented
-        pass
+    def create_new_order_v1(self, number_of_credits:int, payment_coin:str, payment_network:str, affiliate=None):
+        owner_type = self.owner_type()
+        payment_address, payment_memo = fetch_payment_address_and_memo()
+        new_order = Order.objects.create(
+            owner_type=owner_type,
+            user = self if owner_type == 'User' else None,
+            access_code = self if owner_type == 'AccessCode' else None,
+            affiliate = affiliate,
+            number_of_credits = number_of_credits,
+            total_price_usd_cents = get_price_in_usd_cents(number_of_credits),
+            payment_coin = payment_coin,
+            payment_network = payment_network,
+            total_price_crypto = fetch_price_in_crypto(number_of_credits, payment_coin, payment_network),
+            payment_is_direct = False,
+            payment_address = payment_address,
+            payment_memo = payment_memo,
+            status = 'Pending',
+        )
+        new_order.save()
+        return new_order
     def assign_credits_to_api(self, api_key: 'ChainVetAPIKey', number_of_credits:int):
         if api_key.revoked:
             print(f"Error: API Key {api_key} is revoked, and therefore it can't be used anymore.")
@@ -287,18 +321,19 @@ class CreditOwnerMixin:
                 'message': f"API Key reference '{reference}' is too long. Maximum length is 32 characters."
             }
         owner_type = self.owner_type()
-        new_api_key = ChainVetAPIKey.objects.create(
+        new_api_key, key = ChainVetAPIKey.objects.create_key(
             reference = reference,
+            name=reference,
             owner_type = owner_type,
-            user = owner if owner_type == 'User' else None,
-            access_code = owner if owner_type == 'AccessCode' else None,
+            user = self if owner_type == 'User' else None,
+            access_code = self if owner_type == 'AccessCode' else None,
             shares_credits_with_owner = True,
         )
         return {
             'status': 'Success',
-            'message': f"New API Key created for {owner_type} {owner}.",
+            'message': f"New API Key created for {owner_type} {self}.",
             'api_key_reference': new_api_key.reference,
-            'api_key': new_api_key
+            'api_key': key
         }
 
 class CustomAccountManager(BaseUserManager):
@@ -404,7 +439,7 @@ class AccessCode(models.Model, CreditOwnerMixin):
     code = models.CharField(max_length=16, unique=True, db_index=True)
     start_date = models.DateTimeField(default=timezone.now)
     email = models.EmailField(null=True, blank=True)
-    affiliate_origin = models.OneToOneField('users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True)
+    affiliate_origin = models.ForeignKey('users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True)
 
     ## Computed Fields
     credits_paid_for = models.IntegerField(default=0)

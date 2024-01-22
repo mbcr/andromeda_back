@@ -3,10 +3,10 @@ from django.db import transaction
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-# from rest_framework.response import Response
+from rest_framework.response import Response
 
 
 from apps.users.permissions import HasChainVetAPIKey
@@ -430,12 +430,15 @@ def create_new_assessment_for_user(request):
         return Response({"detail": "Failure to create new assessment. Please contact support with error code 4J9Y2."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def create_new_order(request):    
     # Check if necessary data is present
     if not request.data.get('number_of_credits'):
         return Response({"detail": "Missing number_of_credits parameter"}, status=status.HTTP_400_BAD_REQUEST)
-    if not request.data.get('crypto_coin'):
-        return Response({"detail": "Missing crypto_coin parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('payment_coin'):
+        return Response({"detail": "Missing payment_coin parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.data.get('payment_network'):
+        return Response({"detail": "Missing payment_network parameter"}, status=status.HTTP_400_BAD_REQUEST)
     if request.data.get('order_is_for_self') == None:
         return Response({"detail": "Missing order_is_for_self parameter"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -445,7 +448,7 @@ def create_new_order(request):
         try:
             api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
             if api_key_instance.revoked:
-                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"detail": "API Key no longer valid."}, status=status.HTTP_403_FORBIDDEN)
             requesting_user_type = api_key_instance.owner_type
             if requesting_user_type == "User":
                 requesting_user = api_key_instance.user
@@ -470,7 +473,7 @@ def create_new_order(request):
         access_code = request.data.get('access_code')
         if access_code: # Check if the access code is valid, otherwise return error
             try:
-                target_user = user_models.AccessCode.objects.get(code=access_code).user
+                target_user = user_models.AccessCode.objects.get(code=access_code)
             except user_models.AccessCode.DoesNotExist:
                 return Response({"detail": "Invalid access code"}, status=status.HTTP_400_BAD_REQUEST)
         else: # Create new access code
@@ -482,10 +485,15 @@ def create_new_order(request):
     try: # Create the new order from the target user's entity and return payload
         new_order = target_user.create_new_order_v1(
             number_of_credits = request.data.get('number_of_credits'),
-            crypto_coin = request.data.get('crypto_coin'),
-            affiliate_code = requesting_user.affiliate.affiliate_code if requesting_user_type == 'User' else None,
+            payment_coin = request.data.get('payment_coin'),
+            payment_network = request.data.get('payment_network'),
+            affiliate = requesting_user.affiliate if requesting_user_type == 'User' else None,
+            # affiliate_code = requesting_user.affiliate.affiliate_code if requesting_user_type == 'User' else None,
         )
-        payload = OrderSerializer(new_order).data
+        if new_order:
+            payload = OrderSerializer(new_order).data
+        else:
+            return Response({"detail": "Unable to create order"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(payload, status=status.HTTP_201_CREATED)
     except Exception as e: # Log and return
         error_logger = logging.getLogger('error_logger') 

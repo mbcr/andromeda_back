@@ -105,6 +105,7 @@ class CustomUserFullSerializer(serializers.ModelSerializer):
         return super(CustomUserFullSerializer, self).to_representation(instance)
 
 class OrderSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Order
         fields = [
@@ -123,3 +124,13 @@ class OrderSerializer(serializers.ModelSerializer):
             'is_paid',
             'paid_at',
         ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.affiliate:
+            representation['affiliate']= instance.affiliate.affiliate_code
+        owner_type = instance.owner_type
+        representation['owner_type'] = owner_type
+        representation['owner'] = str(instance.user) if owner_type == 'User' else str(instance.access_code)
+        return representation
+        

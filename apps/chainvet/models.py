@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import JSONField
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.utils.crypto import get_random_string
 
 
 
@@ -48,7 +49,22 @@ class Order(models.Model):
 
     def __str__(self):
         paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''
-        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {self.owner_type} - PAID: {self.is_paid} {paid_date}.'
+        order_by_text = f"{self.owner_type} {self.access_code if self.owner_type == 'AccessCode' else self.user}"
+        paid_text = f"{paid_date if self.is_paid else self.is_paid}"
+        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {order_by_text} - PAID: {paid_text}.'
+
+    def generate_unique_code(self):
+        length = 12
+        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        while True:
+            random_string = get_random_string(length, chars)
+            if not Order.objects.filter(order_id=random_string).exists():
+                return random_string
+
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            self.order_id = self.generate_unique_code()
+        super(Order, self).save(*args, **kwargs)
 
 class AssessmentAdmin(admin.ModelAdmin):
     list_filter = ['user', 'access_code', 'type_of_assessment']
