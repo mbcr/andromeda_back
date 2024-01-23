@@ -194,9 +194,15 @@ LOGGING = {
         },
     },
     'handlers': {
+        'coinpaprika': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'coinpaprika.log',
+            'formatter': 'verbose',
+        },
         'error_log_handler': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.FileHandler',
+            'class': 'logging.FileHandler',
             'filename': 'errors.log',
             'formatter': 'verbose',
         },
@@ -221,6 +227,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'coinpaprika': {
+            'handlers': ['coinpaprika'],
+            'level': 'DEBUG',
+            'propagate': True,
+        }
     }
 }
 ### LOGGING - END ###

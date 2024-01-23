@@ -11,13 +11,14 @@ from django.contrib.auth import get_user_model
 from rest_framework_api_key.models import AbstractAPIKey
 
 from ..utilities.olpFunctions import OLP_Functions
-
 from apps.chainvet.models import Order, Assessment
 
 from pprint import pprint
 import logging
 import requests
 from datetime import datetime
+from coinpaprika import client as Coinpaprika
+import logging
 
 
 def get_price_in_usd_cents(number_of_credits:int):
@@ -40,8 +41,14 @@ def get_price_in_usd_cents(number_of_credits:int):
     total_price_in_usd_cents = number_of_credits * base_price_per_credit_in_usd_cents * (1-get_volume_discount(number_of_credits))
     return int(total_price_in_usd_cents)
 
+def coin_name_transfer_function(coin_name:str): # TO BE IMPLEMENTED BETWEEN WHAT IS RECEIVED FROM THE API OR FRONTEND AND WHAT COINPAPRIKA EXPECTS
+    return coin_name
+
 def fetch_price_in_crypto(number_of_credits:int, payment_coin:str, payment_network:str):
+    coinpaprika_client = Coinpaprika.Client()
     total_price_in_usd_cents = get_price_in_usd_cents(number_of_credits)
+    paprika_coin_name = coin_name_transfer_function(payment_coin)
+    total_price_in_cripto = coinpaprika_client.price_converter(base_currency_id='usd-us-dollars', quote_currency_id=payment_coin, amount=total_price_in_usd_cents/100)
     convert_price_to_crypto = 0.002 * total_price_in_usd_cents # Implement a function to use an external API with value, payment coin and network, and return a value in crypto
     price_in_crypto = convert_price_to_crypto
     return price_in_crypto
