@@ -15,6 +15,7 @@ urlpatterns = [
     path('accesscode/assessments/', check_assessment_list_for_access_code, name='access-code-check-status'),
     path('order/create/', create_new_order, name='order-create-create'),
     path('order/status/', check_order_status, name='order-check-status'),
+    path('order/update/{str:order_id}/{str:anonpay_id}/', update_order_with_anonpay_id, name='order-update-with-anonpay-id'),
     path('user/status/', check_self_status, name='user-check-status'),
     path('user/create/assessment/', create_new_assessment_for_user, name='assessment-create-with-user'),
 ]

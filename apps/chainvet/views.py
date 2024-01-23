@@ -703,6 +703,54 @@ def check_assessment_list_for_access_code(request):
         time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return Response({"detail": f"Failure to fetch user data. Please contact support with error code KY53D and the current time: {time_now}."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def update_order_with_anonpay_id(request):
+    # Check if necessary data is present
+    order_id = request.GET.get('order_id')
+    anonpay_id = request.GET.get('anonpay_id')
+    if not order_id:
+        return Response({"detail": "Missing order_id parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if not anonpay_id:
+        return Response({"detail": "Missing anonpay_id parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Identify who's making the request (must be Trocador)
+    api_key = request.META.get("HTTP_X_API_KEY")
+    if api_key: # WITH APIKey belonging to Trocador
+        try:
+            api_key_instance = ChainVetAPIKey.objects.get_from_key(api_key)
+            if api_key_instance.revoked:
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+            requesting_user_type = api_key_instance.owner_type
+            if requesting_user_type == "User":
+                requesting_user = api_key_instance.user
+            elif requesting_user_type == "AccessCode":
+                requesting_user = api_key_instance.access_code
+            else:
+                return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
+            if requesting_user != user_models.CustomUser.objects.get(email="trocador@servidor.app"):
+                return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+        except ChainVetAPIKey.DoesNotExist:
+            return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
+    else: # Deny access
+        return Response({"detail": "Invalid credentials. Please log in"}, status=status.HTTP_403_FORBIDDEN)
+
+    # Identify the order
+    try:
+        order = user_models.Order.objects.get(order_id=order_id)
+    except user_models.Order.DoesNotExist:
+        return Response({"detail": "Invalid order_id"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Update the order
+    if not order.anonpay_id:
+        order.anonpay_id = anonpay_id
+        order.save()
+        return Response({"detail": "Order updated successfully"}, status=status.HTTP_200_OK)
+    else:
+        error_logger = logging.getLogger('error_logger')
+        error_logger.debug(f'apps.chainvet.views: update_order_with_anonpay_id; error location code: 4J9Y3; order_id: {order_id}; anonpay_id: {anonpay_id}')
+        return Response({"detail": "Order already has an anonpay_id"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
