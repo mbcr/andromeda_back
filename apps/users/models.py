@@ -21,9 +21,23 @@ from datetime import datetime
 
 
 def get_price_in_usd_cents(number_of_credits:int):
-    price_per_credit_in_usd_cents = 500 # Get price for different tiers from database
-    #Run some processing
-    total_price_in_usd_cents = number_of_credits * price_per_credit_in_usd_cents
+    def get_volume_discount(number_of_credits:int):
+        if number_of_credits <= 5:
+            return 0
+        elif number_of_credits <= 10:
+            return 0.10
+        elif number_of_credits <= 20:
+            return 0.15
+        elif number_of_credits <= 50:
+            return 0.20
+        elif number_of_credits <= 100:
+            return 0.25
+        else:
+            return 0.30
+    # Migrate price management to DB
+    base_price_per_credit_in_usd_cents = 350
+    price_per_credit_in_usd_cents = 500 
+    total_price_in_usd_cents = number_of_credits * base_price_per_credit_in_usd_cents * (1-get_volume_discount(number_of_credits))
     return int(total_price_in_usd_cents)
 
 def fetch_price_in_crypto(number_of_credits:int, payment_coin:str, payment_network:str):
@@ -76,14 +90,16 @@ class CreditOwnerMixin:
             print(f'Order already exists for {pre_order}')
     def create_new_order_v1(self, number_of_credits:int, payment_coin:str, payment_network:str, affiliate=None):
         owner_type = self.owner_type()
+        price = get_price_in_usd_cents(number_of_credits)
         payment_address, payment_memo = fetch_payment_address_and_memo()
+
         new_order = Order.objects.create(
             owner_type=owner_type,
             user = self if owner_type == 'User' else None,
             access_code = self if owner_type == 'AccessCode' else None,
             affiliate = affiliate,
             number_of_credits = number_of_credits,
-            total_price_usd_cents = get_price_in_usd_cents(number_of_credits),
+            total_price_usd_cents = price,
             payment_coin = payment_coin,
             payment_network = payment_network,
             total_price_crypto = fetch_price_in_crypto(number_of_credits, payment_coin, payment_network),
