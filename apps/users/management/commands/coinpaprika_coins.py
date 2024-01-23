@@ -3,6 +3,7 @@ from coinpaprika.client import Client
 import json
 import os
 import timeit
+from pprint import pprint
 
 from apps.users.models import get_price_in_usd_cents
 
@@ -18,6 +19,7 @@ class Command(BaseCommand):
         free_client = Client()
         # coins_data = free_client.coins()
         conversion_response = free_client.price_converter(base_currency_id='usd-us-dollars', quote_currency_id=payment_coin, amount=amount_in_usd_cents/100)
+        pprint(conversion_response)
         amount_in_xmr = conversion_response['price']
         end_time = timeit.default_timer()
         self.stdout.write(self.style.SUCCESS(f'API call duration: {end_time - start_time}'))

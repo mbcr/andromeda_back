@@ -46,6 +46,7 @@ class Order(models.Model):
     status = models.CharField(max_length=32, null=True, blank=True)
     is_paid = models.BooleanField(default=False, db_index=True)
     paid_at = models.DateTimeField(null=True, blank=True)
+    anonpay_id = models.CharField(max_length=16, null=True, blank=True)
 
     def __str__(self):
         paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''

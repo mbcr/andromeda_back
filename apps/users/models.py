@@ -17,7 +17,7 @@ from pprint import pprint
 import logging
 import requests
 from datetime import datetime
-from coinpaprika import client as Coinpaprika
+from coinpaprika.client import Client as CoinpaprikaClient
 import logging
 
 
@@ -44,20 +44,33 @@ def get_price_in_usd_cents(number_of_credits:int):
 def coin_name_transfer_function(coin_name:str): # TO BE IMPLEMENTED BETWEEN WHAT IS RECEIVED FROM THE API OR FRONTEND AND WHAT COINPAPRIKA EXPECTS
     return coin_name
 
-def fetch_price_in_crypto(number_of_credits:int, payment_coin:str, payment_network:str):
-    coinpaprika_client = Coinpaprika.Client()
-    total_price_in_usd_cents = get_price_in_usd_cents(number_of_credits)
-    paprika_coin_name = coin_name_transfer_function(payment_coin)
-    total_price_in_cripto = coinpaprika_client.price_converter(base_currency_id='usd-us-dollars', quote_currency_id=payment_coin, amount=total_price_in_usd_cents/100)
-    convert_price_to_crypto = 0.002 * total_price_in_usd_cents # Implement a function to use an external API with value, payment coin and network, and return a value in crypto
-    price_in_crypto = convert_price_to_crypto
+def fetch_price_in_crypto(price_in_usd_cents:int, payment_coin_paprika_name:str):
+    coinpaprika_client = CoinpaprikaClient()
+    try:
+        conversion_payload = coinpaprika_client.price_converter(base_currency_id='usd-us-dollars', quote_currency_id=payment_coin_paprika_name, amount=price_in_usd_cents/100)
+        price_in_crypto = conversion_payload.get('price')
+    except Exception as e:
+        raise Exception(f'Error fetching price in crypto for {price_in_usd_cents} USD cents and {payment_coin_paprika_name} as payment coin. Error: {e}')
+    
     return price_in_crypto
 
-def fetch_payment_address_and_memo():
-    payment_address = '0x1234567890' # Implement logic
-    payment_memo = '' # Implement logic
-    return payment_address, payment_memo
-
+def fetch_payment_address_and_memo(payment_coin:str, payment_network:str):
+    if payment_coin == 'Monero' and payment_network == 'XMR':
+        payment_coin = coin_name_transfer_function('xmr-monero') 
+        payment_address = 'ThisIsATestXMRAddress' 
+        payment_memo = '' 
+    elif payment_coin == 'usdt' and payment_network == 'trc20':
+        payment_coin = coin_name_transfer_function('usdt-tether')
+        payment_address = 'ThisIsATestUSDTAddress'
+        payment_memo = '' 
+    else:
+        raise Exception(f'Payment coin and network combination not recognised: {payment_coin} - {payment_network}. Only Monero with XMR network and usdt with trc20 network are currently supported.')
+    
+    return {
+        'payment_coin': payment_coin,
+        'payment_address': payment_address,
+        'payment_memo': payment_memo,
+    }
 
 class CreditOwnerMixin:
     def set_credit_cache(self): # Sets the computed fields for a credit owner instance (CustomUser or AccessCode)
@@ -98,24 +111,27 @@ class CreditOwnerMixin:
     def create_new_order_v1(self, number_of_credits:int, payment_coin:str, payment_network:str, affiliate=None):
         owner_type = self.owner_type()
         price = get_price_in_usd_cents(number_of_credits)
-        payment_address, payment_memo = fetch_payment_address_and_memo()
-
-        new_order = Order.objects.create(
-            owner_type=owner_type,
-            user = self if owner_type == 'User' else None,
-            access_code = self if owner_type == 'AccessCode' else None,
-            affiliate = affiliate,
-            number_of_credits = number_of_credits,
-            total_price_usd_cents = price,
-            payment_coin = payment_coin,
-            payment_network = payment_network,
-            total_price_crypto = fetch_price_in_crypto(number_of_credits, payment_coin, payment_network),
-            payment_is_direct = False,
-            payment_address = payment_address,
-            payment_memo = payment_memo,
-            status = 'Pending',
-        )
-        new_order.save()
+        payment_info = fetch_payment_address_and_memo(payment_coin,payment_network)
+        price_in_crypto = fetch_price_in_crypto(price, payment_info.get('payment_coin'))
+        try:
+            new_order = Order.objects.create(
+                owner_type=owner_type,
+                user = self if owner_type == 'User' else None,
+                access_code = self if owner_type == 'AccessCode' else None,
+                affiliate = affiliate,
+                number_of_credits = number_of_credits,
+                total_price_usd_cents = price,
+                payment_coin = payment_coin,
+                payment_network = payment_network,
+                total_price_crypto = price_in_crypto,
+                payment_is_direct = False,
+                payment_address = payment_info.get('payment_address'),
+                payment_memo = payment_info.get('payment_memo'),
+                status = 'Pending',
+            )
+            new_order.save()
+        except Exception as e:
+            raise Exception(f'Error creating new order for {self} with data: {number_of_credits} credits, {payment_coin} payment coin, {payment_network} payment network. Error: {e}')
         return new_order
     def assign_credits_to_api(self, api_key: 'ChainVetAPIKey', number_of_credits:int):
         if api_key.revoked:
