@@ -448,11 +448,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
         return self.email
 
     def save(self, *args, **kwargs):
-        if not self.affiliate:
-            self.affiliate = Affiliate.objects.create(
-                user=self
-            )
         super(CustomUser, self).save(*args, **kwargs)
+        # Check if the Affiliate already exists to avoid duplication
+        if not hasattr(self, 'affiliate'):
+            Affiliate.objects.create(user=self)
 
     def number_of_api_keys(self):
         from .models import ChainVetAPIKey

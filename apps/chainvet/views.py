@@ -705,10 +705,10 @@ def check_assessment_list_for_access_code(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def update_order_with_anonpay_id(request):
+def update_order_with_anonpay_id(request, order_id, anonpay_id):
     # Check if necessary data is present
-    order_id = request.GET.get('order_id')
-    anonpay_id = request.GET.get('anonpay_id')
+    # order_id = request.GET.get('order_id')
+    # anonpay_id = request.GET.get('anonpay_id')
     if not order_id:
         return Response({"detail": "Missing order_id parameter"}, status=status.HTTP_400_BAD_REQUEST)
     if not anonpay_id:
