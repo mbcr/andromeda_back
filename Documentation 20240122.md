@@ -7,11 +7,16 @@
 - [Create New Assessment for Access Code](#6-create-new-assessment-for-access-code-api-endpoint)
 
 
+# Base API URL
+
+**URL** `https://chainvet-backend.herokuapp.com/api/v1`
+
+
 # 1 Create New Order API Endpoint
 
 ## Endpoint
 
-**POST** `/api/new_order`
+**POST** `/order/create/`
 
 This endpoint is used to create a new order in the system. It supports both authenticated users and guests with a valid API key.
 
@@ -74,7 +79,7 @@ This endpoint is used to create a new order in the system. It supports both auth
 ## Example cURL Request
 
 ```bash
-curl -X POST 'https://yourdomain.com/api/new_order' \
+curl -X POST 'https://chainvet-backend.herokuapp.com/api/v1/order/create/' \
 -H 'Content-Type: application/json' \
 -H 'X-API-KEY: YOUR_API_KEY' \
 -d '{
@@ -89,7 +94,7 @@ curl -X POST 'https://yourdomain.com/api/new_order' \
 
 ## Endpoint
 
-**POST** `/api/check_order_status`
+**POST** `/order/status/`
 
 Allows users and entities with a valid API key to check the status of an order by providing the order's ID.
 
@@ -163,7 +168,7 @@ Allows users and entities with a valid API key to check the status of an order b
 ## Example cURL Request
 
 ```bash
-curl -X POST 'https://yourdomain.com/api/check_order_status' \
+curl -X POST 'https://chainvet-backend.herokuapp.com/api/v1/order/status/' \
 -H 'Content-Type: application/json' \
 -H 'X-API-KEY: YOUR_API_KEY' \
 -d '{
@@ -176,7 +181,7 @@ curl -X POST 'https://yourdomain.com/api/check_order_status' \
 
 ## Endpoint
 
-**POST** `/api/check_access_code_status`
+**POST** `/accesscode/status/`
 
 This endpoint allows users and entities with a valid API key to check the status of an access code.
 
@@ -243,7 +248,7 @@ This endpoint allows users and entities with a valid API key to check the status
 ## Example cURL Request
 
 ```bash
-curl -X POST 'https://yourdomain.com/api/check_access_code_status' \
+curl -X POST 'https://chainvet-backend.herokuapp.com/api/v1/accesscode/status/' \
 -H 'Content-Type: application/json' \
 -H 'X-API-KEY: YOUR_API_KEY' \
 -d '{
@@ -255,7 +260,7 @@ curl -X POST 'https://yourdomain.com/api/check_access_code_status' \
 
 ## Endpoint
 
-**POST** `/api/check_assessment_list_for_access_code`
+**POST** `/accesscode/assessments/`
 
 This endpoint allows users and entities with a valid API key to check a list of assessments associated with a given access code.
 
@@ -344,7 +349,7 @@ This endpoint allows users and entities with a valid API key to check a list of 
 ## Example cURL Request
 
 ```bash
-curl -X POST 'https://yourdomain.com/api/check_assessment_list_for_access_code' \
+curl -X POST 'https://chainvet-backend.herokuapp.com/api/v1/accesscode/assessments/' \
 -H 'Content-Type: application/json' \
 -H 'X-API-KEY: YOUR_API_KEY' \
 -d '{
@@ -357,7 +362,7 @@ curl -X POST 'https://yourdomain.com/api/check_assessment_list_for_access_code' 
 
 ## Endpoint
 
-**GET** `/api/check_self_status`
+**GET** `/user/status/`
 
 This endpoint allows users or entities with a valid API key to check their own status within the system.
 
@@ -416,7 +421,7 @@ This endpoint allows users or entities with a valid API key to check their own s
 ## Example cURL Request
 
 ```bash
-curl -X GET 'https://yourdomain.com/api/check_self_status' \
+curl -X GET 'https://chainvet-backend.herokuapp.com/api/v1/user/status/' \
 -H 'X-API-KEY: YOUR_API_KEY'
 ```
 
@@ -424,7 +429,7 @@ curl -X GET 'https://yourdomain.com/api/check_self_status' \
 
 ## Endpoint
 
-**POST** `/api/create_new_assessment_for_access_code`
+**POST** `/accesscode/create/assessment/`
 
 This endpoint initiates the creation of a new assessment for a given access code, allowing users and entities with a valid API key to submit assessment requests.
 
@@ -501,7 +506,7 @@ This endpoint initiates the creation of a new assessment for a given access code
 ## Example cURL Request
 
 ```bash
-curl -X POST 'https://yourdomain.com/api/create_new_assessment_for_access_code' \
+curl -X POST 'https://chainvet-backend.herokuapp.com/api/v1/accesscode/create/assessment/' \
 -H 'Content-Type: application/json' \
 -H 'X-API-KEY: YOUR_API_KEY' \
 -d '{

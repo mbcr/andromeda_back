@@ -406,16 +406,17 @@ def create_new_assessment_for_user(request):
             return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
 
     if not requesting_user:
-        return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "User not identified"}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
+        print(f'requesting user: {requesting_user}')
         creation_result = requesting_user.create_new_assessment(
             assessment_type = request.data.get('assessment_type'),
             address = request.data.get('address'),
             currency = request.data.get('currency'),
             tx_hash = request.data.get('tx_hash'),
         )
-        if creation_resultget('status') == 'Success':
+        if creation_result.get('status') == 'Success':
             return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
         else:
             return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
