@@ -67,6 +67,10 @@ class Order(models.Model):
             self.order_id = self.generate_unique_code()
         super(Order, self).save(*args, **kwargs)
 
+    def check_for_payments(self): #  TO BE IMPLEMENTED
+        # Check if order is paid by calling Trocador API
+        pass
+
 class AssessmentAdmin(admin.ModelAdmin):
     list_filter = ['user', 'access_code', 'type_of_assessment']
 class Assessment(models.Model):
