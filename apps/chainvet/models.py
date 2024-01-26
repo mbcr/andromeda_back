@@ -2,7 +2,10 @@ from django.db import models
 from django.db.models import JSONField
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.utils import timezone as django_tz
 from django.utils.crypto import get_random_string
+from apps.utilities import trocador_api
+import logging
 
 
 
@@ -47,6 +50,7 @@ class Order(models.Model):
     is_paid = models.BooleanField(default=False, db_index=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     anonpay_id = models.CharField(max_length=16, null=True, blank=True)
+    status_updated_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''
@@ -67,9 +71,32 @@ class Order(models.Model):
             self.order_id = self.generate_unique_code()
         super(Order, self).save(*args, **kwargs)
 
-    def check_for_payments(self): #  TO BE IMPLEMENTED
-        # Check if order is paid by calling Trocador API
-        pass
+    def update_payment_status(self): 
+        try:
+            trocador_status = trocador_api.get_trade_status(self.anonpay_id)
+            payment_status = trocador_status.get('Status')
+            if payment_status == 'finished':
+                self.is_paid = True
+                self.paid_at = django_tz.now()
+                self.status = 'finished'
+                self.status_updated_at = django_tz.now()
+                self.save()
+            else:
+                self.status = payment_status
+                self.status_updated_at = django_tz.now()
+                self.save()
+        except Exception as e:
+            error_log = logging.getLogger('error_logger')
+            error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status: {e}")
+
+    def minutes_since_last_update(self):
+        if self.status_updated_at:
+            return (django_tz.now() - self.status_updated_at).total_seconds() / 60
+        else:
+            return None
+
+    def minutes_since_created(self):
+        return (django_tz.now() - self.created_at).total_seconds() / 60
 
 class AssessmentAdmin(admin.ModelAdmin):
     list_filter = ['user', 'access_code', 'type_of_assessment']

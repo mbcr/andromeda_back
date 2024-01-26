@@ -26,14 +26,14 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
 app.conf.beat_schedule = {
-    # #Scheduler Name
-    # 'telegram-dispatcher-fetch': {
-    #     # Task Name (Name Specified in Decorator)
-    #     'task': 'telegram_dispatcher_fetch',  
-    #     # Schedule      
-    #     'schedule': 5.0,
-    #     # Function Arguments 
-    #     # 'args': ("Hello",) 
-    # },
+    #Scheduler Name
+    'update-payment-status': {
+        # Task Name (Name Specified in Decorator)
+        'task': 'check_unpaid_orders_for_payments',  
+        # Schedule      
+        'schedule': 60 * 3, # 3 minutes
+        # Function Arguments 
+        # 'args': ("Hello",) 
+    },
 }  
 
