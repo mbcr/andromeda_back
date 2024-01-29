@@ -56,11 +56,11 @@ class Order(models.Model):
         paid_date = self.paid_at.strftime('%Y.%m.%d %Hh%Mm%Ss') if self.paid_at else ''
         order_by_text = f"{self.owner_type} {self.access_code if self.owner_type == 'AccessCode' else self.user}"
         paid_text = f"{paid_date if self.is_paid else self.is_paid}"
-        return f'Order {self.id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {order_by_text} - PAID: {paid_text}.'
+        return f'Order {self.id}.{self.order_id} - {self.created_at.strftime("%Y.%m.%d %Hh%Mm%Ss")} - {self.number_of_credits} credits - By: {order_by_text} - PAID: {paid_text}.'
 
     def generate_unique_code(self):
         length = 12
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.'
         while True:
             random_string = get_random_string(length, chars)
             if not Order.objects.filter(order_id=random_string).exists():
