@@ -503,7 +503,7 @@ class AccessCode(models.Model, CreditOwnerMixin):
     
     def generate_unique_code(self):
         length = 16
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789'
         while True:
             code = get_random_string(length, chars)
             if not AccessCode.objects.filter(code=code).exists():
@@ -606,7 +606,7 @@ class Affiliate(models.Model):
 
     def generate_unique_code(self):
         length = 8
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789'
         while True:
             code = get_random_string(length, chars)
             if not Affiliate.objects.filter(affiliate_code=code).exists():

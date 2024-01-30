@@ -60,7 +60,7 @@ class Order(models.Model):
 
     def generate_unique_code(self):
         length = 12
-        chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.'
+        chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789'
         while True:
             random_string = get_random_string(length, chars)
             if not Order.objects.filter(order_id=random_string).exists():
