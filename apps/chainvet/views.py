@@ -339,7 +339,7 @@ def create_new_assessment_for_access_code(request):
 
     authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
     target_access_code = request.data.get('access_code')
-    target_entity = authorised_access_codes_list.get(code=target_access_code)
+    target_entity = authorised_access_codes_list.filter(code=target_access_code).first()
 
     if not target_entity:
         return Response({"detail": "access_code not found"}, status=status.HTTP_400_BAD_REQUEST)
