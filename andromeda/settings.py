@@ -47,21 +47,27 @@ DEBUG = env('DEBUG') == 'True'
 CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
 
 ALLOWED_HOSTS = [
-    'https://chainvet-frontend.herokuapp.com',
-    'https://chainvet-backend.herokuapp.com',
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8000",
+    'chainvet-frontend.herokuapp.com',
+    'chainvet-backend.herokuapp.com',
+    '185.165.169.144',
+    "localhost:5173",
+    "127.0.0.1:5173",
+    "127.0.0.1",
+    "localhost:8000",
     ]
 
-# CSRF_TRUSTED_ORIGINS = [
-#     "http://localhost:8000",
-#     "http://127.0.0.1:8000",
-# ]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://185.165.169.144",
+    "https://185.165.169.144",
+]
 
 CORS_ALLOWED_ORIGINS = [
     'https://chainvet-frontend.herokuapp.com',
     'https://chainvet-backend.herokuapp.com',
+    'http://185.165.169.144',
+    'https://185.165.169.144',
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
@@ -84,7 +90,9 @@ API_KEY_CUSTOM_HEADER = "HTTP_X_API_KEY"
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60*4), # XYZ THIS IS SUB-OPTIMAL FOR SAFETY
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60*24), # XYZ THIS IS SUB-OPTIMAL FOR SAFETY,
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=60*24*7),
+    "BLACKLIST_AFTER_ROTATION": False,
 }
 
 # Application definition
@@ -148,7 +156,6 @@ WSGI_APPLICATION = 'andromeda.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
 if env('ENVIRONMENT') == 'DEV':
     DATABASES = {
         'default': {
@@ -277,6 +284,10 @@ CACHES = {
 #     os.path.join(BASE_DIR, 'static')
 # ]
 # STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -291,7 +302,7 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 # Djoser Related Settings
 DOMAIN = env('DOMAIN')
-SITE_NAME = 'CliqueMed'
+SITE_NAME = 'Andromeda'
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
@@ -314,7 +325,7 @@ DJOSER = {
     'LOGIN_AFTER_ACTIVATION': False,
     'USERNAME_REQUIRED': False,
     'EMAIL': {
-        # 'activation': 'emailAuthTemplates.email.ActivationEmail',
+        'activation': 'emailAuthTemplates.email.ActivationEmail',
         'confirmation': 'emailAuthTemplates.email.ConfirmationEmail',
         'password_reset': 'emailAuthTemplates.email.PasswordResetEmail',
         'password_changed_confirmation': 'emailAuthTemplates.email.PasswordChangedConfirmationEmail',
@@ -331,7 +342,7 @@ EMAIL_USE_TLS = env('EMAIL_USE_TLS') == 'True'
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
-USE_TZ = False
+# USE_TZ = False
 
 
 ## CELERY SETTINGS
