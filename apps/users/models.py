@@ -37,7 +37,6 @@ def get_price_in_usd_cents(number_of_credits:int):
             return 0.30
     # Migrate price management to DB
     base_price_per_credit_in_usd_cents = 350
-    price_per_credit_in_usd_cents = 500 
     total_price_in_usd_cents = number_of_credits * base_price_per_credit_in_usd_cents * (1-get_volume_discount(number_of_credits))
     return int(total_price_in_usd_cents)
 
