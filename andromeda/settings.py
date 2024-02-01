@@ -168,8 +168,8 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'helpdesk_db',
-            'USER': 'helpdesk_db',
+            'NAME': 'andromeda_db',
+            'USER': 'andromeda_db',
             'PASSWORD': db_password,
             'HOST': 'localhost',
             'PORT': '5432',
