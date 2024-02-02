@@ -56,11 +56,11 @@ def fetch_price_in_crypto(price_in_usd_cents:int, payment_coin_paprika_name:str)
 def fetch_payment_address_and_memo(payment_coin:str, payment_network:str):
     if payment_coin == 'Monero' and payment_network == 'XMR':
         payment_coin = coin_name_transfer_function('xmr-monero') 
-        payment_address = 'ThisIsATestXMRAddress' 
+        payment_address = '8883ZWu66QEAM1kjCSvotjWYJtvmHEZcR85E3qF9huoe91emTeFnD6jNBQjk6sNtFVD8GriRFJXntWT1mXQDjEYBN85fPk3' 
         payment_memo = '' 
     elif payment_coin == 'usdt' and payment_network == 'trc20':
         payment_coin = coin_name_transfer_function('usdt-tether')
-        payment_address = 'ThisIsATestUSDTAddress'
+        payment_address = 'TB79az7fMt1L774Mg8BhDNdWxqaV1jP1X2'
         payment_memo = '' 
     else:
         raise Exception(f'Payment coin and network combination not recognised: {payment_coin} - {payment_network}. Only Monero with XMR network and usdt with trc20 network are currently supported.')
