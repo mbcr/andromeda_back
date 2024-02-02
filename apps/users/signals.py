@@ -33,8 +33,8 @@ def notifySystemManagerOfNewUser(sender, instance, created, **kwargs):
     if created:
         from django.core.mail import send_mail
         from django.conf import settings
-        subject = ('New user registration on Andromea')
-        html_message = f'A new user ({instance.email}) has registered on Andromeda. \nPlease check the admin panel to issue correct permissions.\nhttps://andromeda-backend.herokuapp.com/admin/'
+        subject = ('New user registration on Andromeda')
+        html_message = f'A new user ({instance.email}) has registered on Andromeda. \nPlease check the admin panel to issue correct permissions.\nhttp://185.165.169.144/admin/'
         plain_message = html_message
         from_email = settings.EMAIL_HOST_USER
         to = [settings.EMAIL_HOST_USER]

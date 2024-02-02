@@ -47,13 +47,13 @@ DEBUG = env('DEBUG') == 'True'
 CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
 
 ALLOWED_HOSTS = [
-    'chainvet-frontend.herokuapp.com',
-    'chainvet-backend.herokuapp.com',
-    '185.165.169.144',
-    "localhost:5173",
-    "127.0.0.1:5173",
-    "127.0.0.1",
-    "localhost:8000",
+    'http://chainvet-frontend.herokuapp.com',
+    'http://chainvet-backend.herokuapp.com',
+    'http://185.165.169.144',
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1",
+    "http://localhost:8000",
     ]
 
 CSRF_TRUSTED_ORIGINS = [
