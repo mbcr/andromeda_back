@@ -428,7 +428,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     email = models.EmailField(_('email address'), unique=True)
     start_date = models.DateTimeField(default=timezone.now)
     is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     registration_form = models.JSONField(null=True, blank=True)
     affiliate_origin = models.OneToOneField('users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -440,7 +440,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
     objects = CustomAccountManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['registration_form']
+    # REQUIRED_FIELDS = ['registration_form']
 
     # Functions
     def __str__(self):

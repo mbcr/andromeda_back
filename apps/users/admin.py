@@ -45,8 +45,8 @@ class GroupAdmin(origGroupAdmin):
     form = GroupAdminForm
 
 # Register the modified GroupAdmin with the admin site
-admin.site.unregister(Group)
 admin.site = admin.AdminSite(name='my_admin')
+# admin.site.unregister(Group)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(AccessCode)
 admin.site.register(ChainVetAPIKey)
@@ -82,7 +82,7 @@ class UserAdminConfig(UserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': ('email', 'password1', 'password2', 'is_active', 'is_staff'),
-            # 'list': ('roles',),
+            'list': ('roles',),
             }
          ),
     )
