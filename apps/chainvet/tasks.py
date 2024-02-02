@@ -22,6 +22,7 @@ def check_payments():
             time_threshold_for_next_check = unpaid_order.status_updated_at + timedelta(minutes= (3+ minutes_since_creation/20))
             if django_tz.now() > time_threshold_for_next_check:
                 unpaid_order.update_payment_status()
+            time.sleep(0.1)
 
     except Exception as e:
         logger.exception("Error in fetch_messages: %s", e)

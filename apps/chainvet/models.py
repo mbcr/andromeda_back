@@ -69,11 +69,14 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_id:
             self.order_id = self.generate_unique_code()
+        # if not self.is_paid and super(Order, self).is_paid:
+        #     raise NotImplementedError('Chainvet Order save method: Missing implementation of credit attribution.')
         super(Order, self).save(*args, **kwargs)
 
     def update_payment_status(self): 
         try:
             trocador_status = trocador_api.get_trade_status(self.anonpay_id)
+            # print(trocador_status)
             payment_status = trocador_status.get('Status')
             if payment_status == 'finished':
                 self.is_paid = True
@@ -87,7 +90,7 @@ class Order(models.Model):
                 self.save()
         except Exception as e:
             error_log = logging.getLogger('error_logger')
-            error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status: {e}")
+            error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status for order {str(self)}: {e}")
 
     def minutes_since_last_update(self):
         if self.status_updated_at:
