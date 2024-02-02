@@ -22,7 +22,7 @@ def check_payments():
             last_update = unpaid_order.status_updated_at
             if not last_update:
                 last_update = unpaid_order.created_at
-            time_threshold_for_next_check = last_update + timedelta(minutes= 2) + minutes_since_creation/20
+            time_threshold_for_next_check = last_update + timedelta(minutes= (2 + minutes_since_creation/20)) 
             if django_tz.now() > time_threshold_for_next_check:
                 unpaid_order.update_payment_status()
             time.sleep(0.05)
