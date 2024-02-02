@@ -214,6 +214,11 @@ LOGGING = {
         },
     },
     'handlers': {
+        'stdout': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
         'coinpaprika': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -252,7 +257,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         }
-    }
+    },
+    'root': {
+        'handlers': ['stdout'],
+        'level': 'DEBUG',
+    },
 }
 ### LOGGING - END ###
 
