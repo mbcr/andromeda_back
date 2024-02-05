@@ -74,6 +74,10 @@ class Order(models.Model):
         super(Order, self).save(*args, **kwargs)
 
     def update_payment_status(self): 
+        if not self.anonpay_id:
+            self.status_updated_at = django_tz.now()
+            self.save()
+            return
         try:
             trocador_status = trocador_api.get_trade_status(self.anonpay_id)
             # print(trocador_status)
