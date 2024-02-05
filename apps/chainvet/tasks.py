@@ -25,8 +25,8 @@ def check_payments():
             time_threshold_for_next_check = last_update + timedelta(minutes= (2 + minutes_since_creation/20)) 
             if django_tz.now() > time_threshold_for_next_check:
                 unpaid_order.update_payment_status()
-            time.sleep(0.05)
+            time.sleep(0.01)
 
     except Exception as e:
-        logger.exception("Error in fetch_messages: %s", e)
+        logger.exception("Error in check_unpaid_orders_for_payments: %s", e)
         return "Failed"

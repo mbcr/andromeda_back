@@ -219,6 +219,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
+        'api_calls_trocador': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'api_calls_trocador.log',
+            'formatter': 'verbose',
+        },
         'coinpaprika': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -242,6 +248,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        'api_calls_trocador': {
+            'handlers': ['api_calls_trocador'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'error_logger': {
             'handlers': ['error_log_handler'],
             'level': 'DEBUG',
