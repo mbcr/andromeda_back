@@ -52,7 +52,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['api_keys'] = [api_key.reference for api_key in instance.api_keys.all()]
         representation['orders'] = [OrderSerializer(order).data for order in instance.orders.all().order_by('-created_at')]
-        representation['assessments'] = [AssessmentListSerializer(assessment).data for assessment in instance.assessments.all().order_by('-created_at')]
+        representation['assessments'] = [AssessmentListSerializer(assessment).data for assessment in instance.assessments.all().order_by('-time_of_request')]
         return representation
 
 # class CustomUserSerializer(ModelSerializer):

@@ -686,7 +686,7 @@ def check_assessment_list_for_access_code(request):
     
     try:
         assessment_id_list = request.data.get('assessment_id_list')
-        assessment_list = target_entity.assessments.filter(assessment_id__in=assessment_id_list).order_by('-created_at')
+        assessment_list = target_entity.assessments.filter(assessment_id__in=assessment_id_list).order_by('-time_of_request')
         if not assessment_list:
             return Response({"detail": "No assessments found"}, status=status.HTTP_404_NOT_FOUND)
         payload = AssessmentListSerializer(assessment_list, many=True).data

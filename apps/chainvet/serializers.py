@@ -43,8 +43,8 @@ class AssessmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AssessmentListSerializer(serializers.ModelSerializer):
-    time_of_request = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
-    assessment_updated_at = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
+    # time_of_request = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
+    # assessment_updated_at = serializers.DateTimeField(format="%d/%m/%Y-%Hh%M")
     risk_score = serializers.SerializerMethodField()
 
     def get_risk_score(self, obj):
