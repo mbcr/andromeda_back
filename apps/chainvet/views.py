@@ -728,7 +728,7 @@ def update_order_with_anonpay_id(request, order_id, anonpay_id):
                 requesting_user = api_key_instance.access_code
             else:
                 return Response({"detail": "User not identified by APIKey"}, status=status.HTTP_403_FORBIDDEN)
-            if requesting_user != user_models.CustomUser.objects.get(email="trocador@servidor.app"):
+            if requesting_user != user_models.CustomUser.objects.get(email="mail@trocador.app"):
                 return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
         except ChainVetAPIKey.DoesNotExist:
             return Response({"detail": "Invalid API key."}, status=status.HTTP_403_FORBIDDEN)
