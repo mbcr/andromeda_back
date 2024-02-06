@@ -82,6 +82,15 @@ class CreditOwnerMixin:
         else:
             print(f'Error: Owner type for {self} not recognised')
             return
+        if not owner_orders.exists():
+            self.credits_paid_for = 0
+            self.credits_used = 0
+            self.credits_available = 0
+            self.save()
+            import logging
+            error_logger = logging.getLogger('error_logger')
+            error_logger.debug(f'apps.users.models.CreditOwnerMixin.set_credit_cache: No orders found for {str(self)} to set credit cache.')
+            return 0
         orders_paid_for = owner_orders.filter(is_paid=True)
         self.credits_paid_for = orders_paid_for.aggregate(models.Sum('number_of_credits'))['number_of_credits__sum'] or 0
         # Credits used
