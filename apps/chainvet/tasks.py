@@ -9,7 +9,7 @@ from apps.utilities import system_messenger
 
 from apps.chainvet import models as chainvet_models
 
-logger = get_task_logger(__name__)
+logger = get_task_logger('error_logger')
 
 
 @shared_task(name = "check_unpaid_orders_for_payments")
@@ -29,4 +29,5 @@ def check_payments():
 
     except Exception as e:
         logger.exception("Error in check_unpaid_orders_for_payments: %s", e)
+
         return "Failed"

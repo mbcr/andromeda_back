@@ -239,12 +239,12 @@ LOGGING = {
         },
         'request_timing': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',  # Use TimedRotatingFileHandler
+            'class': 'logging.handlers.FileHandler',  # Use TimedRotatingFileHandler
             'filename': 'request_timing.log',
             'formatter': 'verbose',
-            'when': 'midnight',  # Rotate at midnight
-            'interval': 1,  # Every day
-            'backupCount': 7,  # Keep 7 days worth
+            # 'when': 'midnight',  # Rotate at midnight
+            # 'interval': 1,  # Every day
+            # 'backupCount': 7,  # Keep 7 days worth
         },
     },
     'loggers': {
