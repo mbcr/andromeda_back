@@ -23,22 +23,43 @@ import logging
 
 def get_price_in_usd_cents(number_of_credits:int):
     def get_volume_discount(number_of_credits:int):
-        if number_of_credits <= 5:
-            return 0
-        elif number_of_credits <= 10:
-            return 0.10
-        elif number_of_credits <= 20:
-            return 0.15
-        elif number_of_credits <= 50:
-            return 0.20
-        elif number_of_credits <= 100:
-            return 0.25
-        else:
-            return 0.30
+        # if number_of_credits <= 5:
+        #     return 0
+        # elif number_of_credits <= 10:
+        #     return 0.0909
+        # elif number_of_credits <= 20:
+        #     return 0.15
+        # elif number_of_credits <= 50:
+        #     return 0.20
+        # elif number_of_credits <= 100:
+        #     return 0.25
+        # else:
+        #     return 0.30
+        # base_price_per_credit_in_usd_cents = 220
+        # total_price_in_usd_cents = number_of_credits * base_price_per_credit_in_usd_cents * (1-get_volume_discount(number_of_credits))
+        pass
     # Migrate price management to DB
-    base_price_per_credit_in_usd_cents = 350
-    total_price_in_usd_cents = number_of_credits * base_price_per_credit_in_usd_cents * (1-get_volume_discount(number_of_credits))
-    return int(total_price_in_usd_cents)
+    # 5 - $11
+    # 10 - $20
+    # 25 - $40
+    # 50 - $70
+    # 100 - $120
+    # 500 - $550
+    # 1000 - $990
+    package_options = {
+        5: 1100,
+        10: 2000,
+        25: 4000,
+        50: 7000,
+        100: 12000,
+        500: 55000,
+        1000: 99000,
+    }
+    if number_of_credits in package_options:
+        total_price_in_usd_cents = package_options.get(number_of_credits)
+        return total_price_in_usd_cents
+    else:
+        raise Exception(f'Error: Number of credits {number_of_credits} not recognised as a package option. The options are: [5, 10, 25, 50, 100, 500, 1000]')
 
 def coin_name_transfer_function(coin_name:str): # TO BE IMPLEMENTED BETWEEN WHAT IS RECEIVED FROM THE API OR FRONTEND AND WHAT COINPAPRIKA EXPECTS
     return coin_name
@@ -118,7 +139,10 @@ class CreditOwnerMixin:
             print(f'Order already exists for {pre_order}')
     def create_new_order_v1(self, number_of_credits:int, payment_coin:str, payment_network:str, affiliate=None):
         owner_type = self.owner_type()
-        price = get_price_in_usd_cents(number_of_credits)
+        try:
+            price = get_price_in_usd_cents(number_of_credits)
+        except Exception as e:
+            raise Exception(f'Error fetching price in USD cents for {number_of_credits} credits. Error: {e}')
         payment_info = fetch_payment_address_and_memo(payment_coin,payment_network)
         price_in_crypto = fetch_price_in_crypto(price, payment_info.get('payment_coin'))
         try:
