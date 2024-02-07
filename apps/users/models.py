@@ -59,7 +59,7 @@ def get_price_in_usd_cents(number_of_credits:int):
         total_price_in_usd_cents = package_options.get(number_of_credits)
         return total_price_in_usd_cents
     else:
-        raise Exception(f'Error: Number of credits {number_of_credits} not recognised as a package option. The options are: [5, 10, 25, 50, 100, 500, 1000]')
+        raise Exception(f'Error: Number of credits requested ({number_of_credits}) is not recognised as a package option. The current options are: [5, 10, 25, 50, 100, 500, 1000]')
 
 def coin_name_transfer_function(coin_name:str): # TO BE IMPLEMENTED BETWEEN WHAT IS RECEIVED FROM THE API OR FRONTEND AND WHAT COINPAPRIKA EXPECTS
     return coin_name
@@ -142,7 +142,7 @@ class CreditOwnerMixin:
         try:
             price = get_price_in_usd_cents(number_of_credits)
         except Exception as e:
-            raise Exception(f'Error fetching price in USD cents for {number_of_credits} credits. Error: {e}')
+            raise Exception(f'Error fetching price for {number_of_credits} credits. {e}')
         payment_info = fetch_payment_address_and_memo(payment_coin,payment_network)
         price_in_crypto = fetch_price_in_crypto(price, payment_info.get('payment_coin'))
         try:
