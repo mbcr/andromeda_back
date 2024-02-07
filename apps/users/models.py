@@ -12,6 +12,7 @@ from rest_framework_api_key.models import AbstractAPIKey
 
 from ..utilities.olpFunctions import OLP_Functions
 from apps.chainvet.models import Order, Assessment
+from apps.utilities import api_crystal_blockchain as cbc_api
 
 from pprint import pprint
 import logging
@@ -19,6 +20,7 @@ import requests
 from datetime import datetime
 from coinpaprika.client import Client as CoinpaprikaClient
 import logging
+from pprint import pprint
 
 
 def get_price_in_usd_cents(number_of_credits:int):
@@ -190,7 +192,7 @@ class CreditOwnerMixin:
             api_key.assigned_credits += number_of_credits
             self.save()
             api_key.save()
-    def create_new_assessment(self, assessment_type:str, address:str, currency:str, tx_hash:str=None):
+    def create_new_assessment(self, assessment_type:str, address:str, currency:str, tx_hash:str=None, override_existing_assessment:bool=False):
         def assessment_already_exists(cbc_request_data: dict) -> bool:
             if assessment_type == "address":
                 request_transaction_hash = None
@@ -224,9 +226,9 @@ class CreditOwnerMixin:
             return payload
         # Set name based on owner type
         if self.owner_type() == 'User':
-            name = f"Client {self.email}"
+            name = f"test_user"
         elif self.owner_type() == 'AccessCode':
-            name = f"Client AC {self.code}"
+            name = f"test_user"
         else:
             return {
                 'status': 'Error',
@@ -262,76 +264,21 @@ class CreditOwnerMixin:
             }
 
         # Check if assessment already exists
-        if assessment_already_exists(cbc_request_data):
+        if assessment_already_exists(cbc_request_data) and not override_existing_assessment:
             return {
                 'status': 'Error',
-                'message': f'Assessment already exists for {cbc_request_data}'
+                'message': f'Assessment already exists for the requested data. The API parameter override_existing_assessment default value is false. Your request had it set to {override_existing_assessment} so a new assessment was not created.'
             }
         
-        print('CreditOwnerMixin.create_new_assessment. External API call is being mocked')
-        ### COMMENTED OUT FOR MOCKING
-        # # Make request to CBC API
-        # response = requests.post(
-        #     "https://apiexpert.crystalblockchain.com/monitor/tx/add",
-        #     headers={
-        #         "accept": "application/json",
-        #         "X-Auth-Apikey": settings.CRYSTAL_API_KEY
-        #     },
-        #     data= cbc_request_data
-        # )
-
-        # # Check if request was successful
-        # if response.status_code != 200:
-        #     error_message = response.json()['meta']['error_message']
-        #     return {
-        #         'status': 'Error',
-        #         'message': f'Unable to retrieve data from external API. Error message: {error_message}'
-        #     }
-        # response_data = response.json()
-        response_data = {
-            'data': {
-                'updated_at': 1624291200,
-                'alert_grade': 'C',
-                'riskscore': 0.1,
-                'signals': [
-                     {
-                        "atm": 0.0,
-                        "child_exploitation": 0.0,
-                        "dark_market": 0.0,
-                        "dark_service": 0.0,
-                        "enforcement_action": 0.0,
-                        "exchange_fraudulent": 0.0,
-                        "exchange_licensed": 1.0,
-                        "exchange_unlicensed": 0.0,
-                        "gambling": 0.0,
-                        "illegal_service": 0.0,
-                        "liquidity_pools": 0.0,
-                        "marketplace": 0.0,
-                        "miner": 0.0,
-                        "mixer": 0.0,
-                        "other": 0.0,
-                        "p2p_exchange_licensed": 0.0,
-                        "p2p_exchange_unlicensed": 0.0,
-                        "payment": 0.0,
-                        "ransom": 0.0,
-                        "sanctions": 0.0,
-                        "scam": 0.0,
-                        "seized_assets": 0.0,
-                        "stolen_coins": 0.0,
-                        "terrorism_financing": 0.0,
-                        "wallet": 0.0
-                    }
-                ],
-                'status': 'ready',
-                'id': f"MockAssessment#{Assessment.objects.all().count()+1}",
-                'amount': 2,
-                'fiat': 123,
-                'fiat_code_effective': 'usd',
-                'risky_volume': 0.8,
-                'risky_volume_fiat': 123,
-
-            }
-        }
+        # Make the request to the CBC API
+        try:
+            response = cbc_api.new_assessment(cbc_request_data)
+            if response.get('status') == 'Error':
+                raise Exception(f'Error creating new assessment for {str(self)} with data: {cbc_request_data}. Error message: {response.get("message")}')
+            response_data = response.get('data')
+        except Exception as e:
+            error_logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error creating new assessment for {str(self)} after CBC request, with data: {cbc_request_data}. Error: {e}')
+            raise Exception(f'Error creating new assessment for {str(self)} with data: {cbc_request_data}. Exception: {e}')
 
         # Initiate atomic transaction to ensure the client is only charged if the assessment is successfully created
         try:
@@ -345,7 +292,7 @@ class CreditOwnerMixin:
                     currency = currency,
                     address_hash = address,
                     type_of_assessment = "address",
-                    response_data = {},
+                    response_data = response_data,
                     risk_grade = response_data['data']['alert_grade'],
                     risk_score = response_data['data']['riskscore'],
                     risk_signals = response_data['data']['signals'],
@@ -373,7 +320,7 @@ class CreditOwnerMixin:
             error_logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error creating new assessment for {str(self)} after CBC request, with data: {cbc_request_data}. Error: {e}')
             return {
                 'status': 'Error',
-                'message': f'Error creating new assessment for {str(self)} with data: {cbc_request_data}'
+                'message': f'Error creating new assessment for {str(self)} with data: {cbc_request_data}. Error: {e}'
             }
 
         # Prepare response payload
@@ -651,3 +598,14 @@ class Affiliate(models.Model):
     
     def __str__(self):
         return f'Affiliate {self.affiliate_code}'
+
+
+class ConfigVariable(models.Model):
+    name = models.CharField(max_length=32, null=True, blank=True)
+    value = models.CharField(max_length=32, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name}: {self.value}"
+
+
+

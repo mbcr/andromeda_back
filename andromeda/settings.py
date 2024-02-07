@@ -225,6 +225,12 @@ LOGGING = {
             'filename': 'api_calls_trocador.log',
             'formatter': 'verbose',
         },
+        'api_calls_cbc': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'api_calls_cbc.log',
+            'formatter': 'verbose',
+        },
         'coinpaprika': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -250,6 +256,11 @@ LOGGING = {
     'loggers': {
         'api_calls_trocador': {
             'handlers': ['api_calls_trocador'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'api_calls_cbc': {
+            'handlers': ['api_calls_cbc'],
             'level': 'DEBUG',
             'propagate': True,
         },

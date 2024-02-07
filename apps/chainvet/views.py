@@ -350,11 +350,13 @@ def create_new_assessment_for_access_code(request):
             address = request.data.get('address'),
             currency = request.data.get('currency'),
             tx_hash = request.data.get('tx_hash'),
+            override_existing_assessment = request.data.get('override_existing_assessment') == "True"
         )
         if creation_result.get('status') == 'Success':
             return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
         else:
             return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
+        print('HERE?')
     except Exception as e:
         logger = logging.getLogger('error_logger')
         log_data = {
@@ -415,6 +417,7 @@ def create_new_assessment_for_user(request):
             address = request.data.get('address'),
             currency = request.data.get('currency'),
             tx_hash = request.data.get('tx_hash'),
+            override_existing_assessment = request.data.get('override_existing_assessment') == "True"
         )
         if creation_result.get('status') == 'Success':
             return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
