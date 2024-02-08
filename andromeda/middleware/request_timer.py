@@ -14,14 +14,6 @@ class RequestTimingMiddleware:
         end_time = now()
         duration = (end_time - start_time).total_seconds()
         if duration > 0:
-            print(f"Request to {request.path} took {duration} seconds")
             self.logger.debug(f"Request to {request.path} took {duration} seconds")
-        
-        print(f"Logger Level: {self.logger.getEffectiveLevel()}")
-        # Iterate over all handlers of the logger
-        for handler in self.logger.handlers:
-            print(f"Handler: {handler.__class__.__name__}")
-            if hasattr(handler, 'baseFilename'):
-                print(f"File Path: {handler.baseFilename}")
 
         return response
