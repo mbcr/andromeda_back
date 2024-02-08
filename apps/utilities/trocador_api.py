@@ -1,5 +1,6 @@
 import requests
 import logging
+from django.utils.timezone import now
 
 
 main_url = 'https://trocador.app/en/'
@@ -7,11 +8,16 @@ logger = logging.getLogger('api_calls_trocador')
 error_logger = logging.getLogger('error_logger')
 
 def get_trade_status(trade_id: str):
+    start_time = now()
     try:
         url = main_url + 'anonpay/status/' + trade_id
         response = requests.get(url)
-        logger.debug(f"trocador_api>get_trade_status: trade_id: {trade_id}, response_code: {response.status_code}.")
+        end_time = now()
+        duration = (end_time - start_time).total_seconds()
+        logger.debug(f"trocador_api>get_trade_status: trade_id: {trade_id}, response_code: {response.status_code}. (Duration: {duration} seconds)")
         return response
     except Exception as e:
-        logger.debug(f"trocador_api>get_trade_status: FAILED to get trade_id: {trade_id}, response_code: {response.status_code}. Raising error.")
+        end_time = now()
+        duration = (end_time - start_time).total_seconds()
+        logger.debug(f"trocador_api>get_trade_status: FAILED to get trade_id: {trade_id}, response_code: {response.status_code}. Raising error. (Duration: {duration} seconds)")
         raise e
