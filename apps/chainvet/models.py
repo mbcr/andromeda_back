@@ -100,6 +100,7 @@ class Order(models.Model):
         except Exception as e:
             error_log = logging.getLogger('error_logger')
             error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status for order {str(self)}: Could not update order with data: {trocador_status_call_data}.")
+            return
 
     def minutes_since_last_update(self):
         if self.status_updated_at:

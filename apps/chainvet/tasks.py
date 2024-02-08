@@ -9,7 +9,7 @@ from apps.utilities import system_messenger
 
 from apps.chainvet import models as chainvet_models
 
-logger = get_task_logger('error_logger')
+error_logger = get_task_logger('error_logger')
 
 
 @shared_task(name = "check_unpaid_orders_for_payments")
@@ -26,8 +26,7 @@ def check_payments():
             if django_tz.now() > time_threshold_for_next_check:
                 unpaid_order.update_payment_status()
             time.sleep(0.01)
-
+        return "Success"
     except Exception as e:
-        logger.exception("Error in check_unpaid_orders_for_payments: %s", e)
-
+        error_logger.debug("Error in check_unpaid_orders_for_payments: %s", e)
         return "Failed"
