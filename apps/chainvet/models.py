@@ -85,7 +85,6 @@ class Order(models.Model):
             error_log = logging.getLogger('error_logger')
             error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status for order {str(self)}: Could not decode Trocador API into JSON.")
             return
-        
         try:
             payment_status = trocador_status_call_data.get('Status')
             if payment_status == 'finished':
