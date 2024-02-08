@@ -79,9 +79,15 @@ class Order(models.Model):
             self.save()
             return
         try:
-            trocador_status = trocador_api.get_trade_status(self.anonpay_id)
-            # print(trocador_status)
-            payment_status = trocador_status.get('Status')
+            trocador_status_call = trocador_api.get_trade_status(self.anonpay_id)
+            trocador_status_call_data = trocador_status_call.json()
+        except Exception as e:
+            error_log = logging.getLogger('error_logger')
+            error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status for order {str(self)}: Could not decode Trocador API into JSON.")
+            return
+        
+        try:
+            payment_status = trocador_status_call_data.get('Status')
             if payment_status == 'finished':
                 self.is_paid = True
                 self.paid_at = django_tz.now()
@@ -94,7 +100,7 @@ class Order(models.Model):
                 self.save()
         except Exception as e:
             error_log = logging.getLogger('error_logger')
-            error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status for order {str(self)}: {e}")
+            error_log.debug(f"apps.chainvet.models>Order: Error in update_payment_status for order {str(self)}: Could not update order with data: {trocador_status_call_data}.")
 
     def minutes_since_last_update(self):
         if self.status_updated_at:
