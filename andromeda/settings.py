@@ -10,11 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
-from pathlib import Path
 import os
 import environ
-import django_heroku
+from pathlib import Path
 from datetime import timedelta
+# import django_heroku
 
 
 
@@ -47,13 +47,13 @@ DEBUG = env('DEBUG') == 'True'
 CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
 
 ALLOWED_HOSTS = [
-    'http://chainvet-frontend.herokuapp.com',
-    'http://chainvet-backend.herokuapp.com',
-    'http://185.165.169.144',
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1",
-    "http://localhost:8000",
+    'chainvet-frontend.herokuapp.com',
+    'chainvet-backend.herokuapp.com',
+    '185.165.169.144',
+    "localhost:5173",
+    "127.0.0.1:5173",
+    "127.0.0.1",
+    "localhost:8000",
     ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -131,6 +131,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'andromeda.middleware.request_timer.RequestTimingMiddleware',
 ]
 
 ROOT_URLCONF = 'andromeda.urls'
@@ -245,7 +246,7 @@ LOGGING = {
         },
         'request_timing': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.FileHandler',  # Use TimedRotatingFileHandler
+            'class': 'logging.FileHandler',  # Use TimedRotatingFileHandler
             'filename': 'request_timing.log',
             'formatter': 'verbose',
             # 'when': 'midnight',  # Rotate at midnight
@@ -384,4 +385,4 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'  
 CELERY_TIMEZONE = "UTC"
 
-django_heroku.settings(locals())
+# django_heroku.settings(locals())

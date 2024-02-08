@@ -38,25 +38,21 @@ def new_assessment(cbc_request_data: dict)->dict:
             'data': response_data
         }
 
-    # print(f'api_crystal_blockchain> Sending request with data:')
-    # pprint(cbc_request_data)
-    pass
     response = requests.post(
         url=api_main_url,
         headers=request_headers,
         data= cbc_request_data
     )
-    print(f'response status code: {response.status_code}')
-    pprint(response.json())
 
     if response.status_code != 200:
         error_message = response.json()['meta']['error_message']
-        logger.debug(f"utils.api_crystal_blockchain>new_assessment: response_code: {response.status_code}, response: {response.json()}, cbc_request_data: {cbc_request_data}")
+        logger.debug(f"utils.api_crystal_blockchain>new_assessment: response_code: {response.status_code}, cbc_request_data: {cbc_request_data}, response: {response.json()}")
         return {
             'status': 'Error',
             'status_code': response.status_code,
-            'message': f'Unable to retrieve data from external API. Error message: {error_message}'
+            'message': f'Unable to retrieve data from CBC API. Error message: {error_message}'
         }
+    
     response_data = response.json()
     logger.debug(f"utils.api_crystal_blockchain>new_assessment: response_code: |{response.status_code}|, response: |{response_data}|, cbc_request_data: |{cbc_request_data}|")
     
