@@ -42,9 +42,8 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
 DEBUG = env('DEBUG') == 'True'
-
-# Crystal API KEY
 CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
+TROCADOR_API_KEY = env('TROCADOR_API_KEY')
 
 ALLOWED_HOSTS = [
     'chainvet-frontend.herokuapp.com',

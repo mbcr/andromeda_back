@@ -21,3 +21,25 @@ def get_trade_status(trade_id: str):
         duration = (end_time - start_time).total_seconds()
         logger.debug(f"trocador_api>get_trade_status: FAILED to get trade_id: {trade_id}, response_code: {response.status_code}. Raising error. (Duration: {duration} seconds)")
         raise e
+
+def get_trade_status_batch(trade_ids: list):
+    from django.conf import settings
+
+    start_time = now()
+    try:
+        url = main_url + 'anonpay/statusbatch/'
+        trade_ids_str = ','.join(trade_ids)
+        request_data = {
+            'api_key': settings.TROCADOR_API_KEY,
+            'trade_ids': trade_ids_str
+        }
+        response = requests.post(url, data=request_data)
+        end_time = now()
+        duration = (end_time - start_time).total_seconds()
+        logger.debug(f"trocador_api>get_trade_status_batch: trade_ids: {trade_ids}, response_code: {response.status_code}. (Duration: {duration} seconds)")
+        return response
+    except Exception as e:
+        end_time = now()
+        duration = (end_time - start_time).total_seconds()
+        logger.debug(f"trocador_api>get_trade_status_batch: FAILED to get trade_ids: {trade_ids}, response_code: {response.status_code}. Raising error. (Duration: {duration} seconds)")
+        raise Exception(f"Failed to get response from trocador_api.get_trade_status_batch. Request was: {request_data}.")
