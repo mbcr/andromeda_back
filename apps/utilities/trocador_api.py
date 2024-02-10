@@ -33,7 +33,10 @@ def get_trade_status_batch(trade_ids: list):
             'api_key': settings.TROCADOR_API_KEY,
             'trade_ids': trade_ids_str
         }
-        response = requests.post(url, data=request_data)
+        response = requests.post(url, json=request_data)
+        if response.status_code != 200:
+            raise Exception(f"trocador_api>get_trade_status_batch: Failed to get response from trocador_api.get_trade_status_batch. Status code was: {response.status_code}. Request was: {request_data}.")
+        
         end_time = now()
         duration = (end_time - start_time).total_seconds()
         logger.debug(f"trocador_api>get_trade_status_batch: trade_ids: {trade_ids}, response_code: {response.status_code}. (Duration: {duration} seconds)")
