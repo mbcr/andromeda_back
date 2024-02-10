@@ -8,9 +8,9 @@ from django.conf import settings
 from apps.utilities import system_messenger
 
 from apps.chainvet import models as chainvet_models
+from apps.utilities import trocador_api
 
 error_logger = get_task_logger('error_logger')
-
 
 
 @shared_task(name = "check_unpaid_orders_for_payments")

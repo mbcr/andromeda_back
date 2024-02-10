@@ -44,5 +44,5 @@ def get_trade_status_batch(trade_ids: list):
     except Exception as e:
         end_time = now()
         duration = (end_time - start_time).total_seconds()
-        logger.debug(f"trocador_api>get_trade_status_batch: FAILED to get trade_ids: {trade_ids}, response_code: {response.status_code}. Raising error. (Duration: {duration} seconds)")
+        logger.debug(f"trocador_api>get_trade_status_batch: FAILED to get trade_ids_str: {trade_ids_str}, response_code: {response.status_code}. Raising error. (Duration: {duration} seconds)")
         raise Exception(f"Failed to get response from trocador_api.get_trade_status_batch. Request was: {request_data}.")
