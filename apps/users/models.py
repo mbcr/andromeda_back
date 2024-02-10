@@ -237,7 +237,7 @@ class CreditOwnerMixin:
         
         # Check if tx data is provided
         if assessment_type == 'transaction':
-            if not tx:
+            if not tx_hash:
                 return {
                     'status': 'Error',
                     'message': f'No transaction hash provided for transaction assessment.'
