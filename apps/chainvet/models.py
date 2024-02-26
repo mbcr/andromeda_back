@@ -38,7 +38,7 @@ class Order(models.Model):
     affiliate = models.ForeignKey(to='users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     last_interaction = models.DateTimeField(auto_now=True, null=True, blank=True)
     number_of_credits = models.IntegerField(default=0)
-    total_price_usd_cents = models.FloatField(default=0)
+    total_price_usd_cents = models.IntegerField(default=0)
     payment_coin = models.CharField(max_length=10, null=True, blank=True)
     payment_network = models.CharField(max_length=10, null=True, blank=True)
     total_price_crypto = models.FloatField(default=0)
@@ -110,6 +110,13 @@ class Order(models.Model):
 
     def minutes_since_created(self):
         return (django_tz.now() - self.created_at).total_seconds() / 60
+
+    def affiliate_income_share_usd_cents(self):
+        if self.affiliate:
+            order_margin = self.total_price_usd_cents - (80 * self.number_of_credits)
+            return order_margin * self.affiliate.income_share / 100
+        else:
+            return 0
 
 class AssessmentAdmin(admin.ModelAdmin):
     list_filter = ['user', 'access_code', 'type_of_assessment']

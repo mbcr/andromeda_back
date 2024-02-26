@@ -126,8 +126,14 @@ class OrderSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+
+        # Update the affiliate field to use affiliate_code
         if instance.affiliate:
             representation['affiliate']= instance.affiliate.affiliate_code
+            affiliate_income = instance.affiliate_income_share_usd_cents()
+            if affiliate_income:
+                representation['affiliate_income_share_usd_cents'] = affiliate_income
+
         owner_type = instance.owner_type
         representation['owner_type'] = owner_type
         if owner_type == 'User':
