@@ -74,7 +74,7 @@ def check_assessment_by_id(cbc_id:str)->dict:
     request_url = f"{api_main_url}/{specific_url}"
     cbc_request_data = {
         "filter": {
-            "id": cbc_id
+            "id": "975b97e"
         }
     }
 
@@ -100,5 +100,5 @@ def check_assessment_by_id(cbc_id:str)->dict:
         'status': 'Success',
         'status_code': 200,
         'message': 'Data was successfully retrieved from the external API.',
-        'data': response_data
+        'payload': response_data
     }

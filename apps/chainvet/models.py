@@ -180,7 +180,7 @@ class Assessment(models.Model):
             error_log.debug(f"apps.chainvet.models>Assessment: Code MAU88. Error message: {cbc_response.get('message')}")
             return
         
-        assessment_data = cbc_response.get('payload').get('data')
+        assessment_data = cbc_response.get('payload').get('data')[0]
 
         if assessment_data.get('status') not in ['ready']:
             self.assessment_updated_at = django_tz.now()
@@ -194,7 +194,7 @@ class Assessment(models.Model):
         self.risk_score = assessment_data['riskscore'],
         self.risk_signals = assessment_data['signals'],
         self.status_assessment = assessment_data['status'],
-        if self.assessment_type == "transaction":
+        if self.type_of_assessment == "transaction":
             self.transaction_volume_coin = assessment_data['amount']
             self.transaction_volume_fiat = assessment_data['fiat']
             self.transaction_volume_fiat_currency_code = assessment_data['fiat_code_effective']
