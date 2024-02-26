@@ -87,7 +87,7 @@ def check_payments():
 
 @shared_task(name = "update_non_ready_assessments")
 def check_payments():
-    non_ready_assessments = chainvet_models.Assessment.objects.all().exclude(status='ready')
+    non_ready_assessments = chainvet_models.Assessment.objects.all().exclude(status_assessment='ready')
     if not non_ready_assessments.exists():
         return "No non-ready assessments found."
     try:
