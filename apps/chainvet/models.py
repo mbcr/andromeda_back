@@ -188,12 +188,12 @@ class Assessment(models.Model):
             return
         
         updated_at_datetime = datetime.utcfromtimestamp(assessment_data['updated_at'])
-        self.assessment_updated_at = updated_at_datetime,
-        self.response_data = assessment_data,
-        self.risk_grade = assessment_data['alert_grade'],
-        self.risk_score = assessment_data['riskscore'],
-        self.risk_signals = assessment_data['signals'],
-        self.status_assessment = assessment_data['status'],
+        self.assessment_updated_at = updated_at_datetime
+        self.response_data = assessment_data
+        self.risk_grade = assessment_data['alert_grade']
+        self.risk_score = assessment_data['riskscore']
+        self.risk_signals = assessment_data['signals']
+        self.status_assessment = assessment_data['status']
         if self.type_of_assessment == "transaction":
             self.transaction_volume_coin = assessment_data['amount']
             self.transaction_volume_fiat = assessment_data['fiat']
