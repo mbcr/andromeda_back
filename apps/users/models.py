@@ -318,10 +318,10 @@ class CreditOwnerMixin:
                 'payload': AssessmentListSerializer(new_assessment).data,
             }
         except Exception as e:
-            error_logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error creating new assessment for {str(self)} after CBC request, with data: {cbc_request_data}. Error: {e}')
+            error_logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Code UJ56D Error creating new assessment for {str(self)} after CBC request, with data: {cbc_request_data}. Error: {e}')
             return {
                 'status': 'Error',
-                'message': f'Error creating new assessment for {str(self)} with data: {cbc_request_data}. Error: {e}'
+                'message': f'Error creating new assessment for {str(self)} with data: {cbc_request_data}. Error code HJG87: {e}'
             }
 
         # Prepare response payload
@@ -583,6 +583,7 @@ class Affiliate(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
     affiliate_code = models.CharField(max_length=8, unique=True, blank=True, null=True)
+    income_share = models.IntegerField(default=5000) # 1/100 parts: 5000 = 50.00%
 
     def generate_unique_code(self):
         length = 8
