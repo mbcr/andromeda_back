@@ -128,6 +128,7 @@ class Assessment(models.Model):
 
     assessment_id = models.CharField(max_length=100, unique=True, db_index=True)
     time_of_request = models.DateTimeField(auto_now_add=True)
+    cbc_id = models.CharField(max_length=16, null=True, blank=True)
     response_data = JSONField()
     
     user = models.ForeignKey(to='users.CustomUser', on_delete=models.CASCADE, null=True, blank=True, related_name='assessments')

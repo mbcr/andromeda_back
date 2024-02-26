@@ -681,6 +681,7 @@ def check_assessment_list_for_access_code(request):
         else:
             return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
 
+    # Check the requesting user's authorisation to access the target entity
     authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
     target_access_code = request.data.get('access_code')
     try:
