@@ -354,6 +354,8 @@ def create_new_assessment_for_access_code(request):
         )
         if creation_result.get('status') == 'Success':
             return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
+        elif creation_result.get('status') == 'Warning':
+            return Response(creation_result.get('payload'), status=status.HTTP_200_OK)
         else:
             return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
         print('HERE?')
@@ -421,6 +423,8 @@ def create_new_assessment_for_user(request):
         )
         if creation_result.get('status') == 'Success':
             return Response(creation_result.get('payload'), status=status.HTTP_201_CREATED)
+        elif creation_result.get('status') == 'Warning':
+            return Response(creation_result.get('payload'), status=status.HTTP_200_OK)
         else:
             return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:

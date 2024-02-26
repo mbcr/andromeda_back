@@ -202,10 +202,12 @@ class CreditOwnerMixin:
             if assessment_type == "transaction":
                 assessment_query = assessment_query.filter(transaction_hash=request_transaction_hash) 
             assessment_query_for_owner = assessment_query.filter(access_code = self) if self.owner_type() == 'AccessCode' else assessment_query.filter(user = self)
-            if assessment_query_for_owner.exists():
-                return True
+            existing_assessment = assessment_query_for_owner.first()
+
+            if existing_assessment:
+                return True, existing_assessment
             else:
-                return False
+                return False, None
         
         error_logger = logging.getLogger('error_logger')
 
@@ -264,9 +266,11 @@ class CreditOwnerMixin:
             }
 
         # Check if assessment already exists
-        if assessment_already_exists(cbc_request_data) and not override_existing_assessment:
+        assessment_exists, existing_assessment = assessment_already_exists(cbc_request_data)
+        if assessment_exists and not override_existing_assessment:
             return {
-                'status': 'Error',
+                'status': 'Warning',
+                'payload': AssessmentListSerializer(existing_assessment).data,
                 'message': f'Assessment already exists for the requested data. The API parameter override_existing_assessment default value is false. Your request had it set to {override_existing_assessment} so a new assessment was not created.'
             }
         
