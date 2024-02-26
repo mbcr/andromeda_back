@@ -6,7 +6,7 @@ from pprint import pprint
 
 
 
-api_main_url = 'https://apiexpert.crystalblockchain.com/monitor/tx/add'
+api_main_url = 'https://apiexpert.crystalblockchain.com/'
 api_key = settings.CRYSTAL_API_KEY
 request_headers={
     "accept": "application/json",
@@ -17,6 +17,8 @@ request_headers={
 logger = logging.getLogger('api_calls_cbc')
 
 def new_assessment(cbc_request_data: dict)->dict:
+    specific_url = "monitor/tx/add"
+    request_url = f"{api_main_url}/{specific_url}"
     try:
         from apps.users.models import ConfigVariable
         api_mocking_config = ConfigVariable.objects.get(name='cbc_api_mocking_is_active')
@@ -42,7 +44,7 @@ def new_assessment(cbc_request_data: dict)->dict:
         }
 
     response = requests.post(
-        url=api_main_url,
+        url=request_url,
         headers=request_headers,
         data= cbc_request_data
     )
@@ -59,6 +61,41 @@ def new_assessment(cbc_request_data: dict)->dict:
     response_data = response.json()
     logger.debug(f"utils.api_crystal_blockchain>new_assessment: response_code: |{response.status_code}|, response: |{response_data}|, cbc_request_data: |{cbc_request_data}|")
     
+    return {
+        'status': 'Success',
+        'status_code': 200,
+        'message': 'New assessment was successfully retrieved from the external API.',
+        'data': response_data
+    }
+
+
+def check_assessment_by_id(cbc_id:str)->dict:
+    specific_url = "monitor/batch/txs"
+    request_url = f"{api_main_url}/{specific_url}"
+    cbc_request_data = {
+        "filter": {
+            "id": cbc_id
+        }
+    }
+
+    response = requests.post(
+        url=request_url,
+        headers=request_headers,
+        data= cbc_request_data
+    )
+
+    if response.status_code != 200:
+        error_message = response.json()['meta']['error_message']
+        logger.debug(f"utils.api_crystal_blockchain>new_assessment: response_code: {response.status_code}, cbc_request_data: {cbc_request_data}, response: {response.json()}")
+        return {
+            'status': 'Error',
+            'status_code': response.status_code,
+            'message': f'Unable to retrieve data from CBC API. Error message: {error_message}'
+        }
+    
+    response_data = response.json()
+    logger.debug(f"utils.api_crystal_blockchain>check_assessment_by_id: response_code: |{response.status_code}|, response: |{response_data}|, cbc_request_data: |{cbc_request_data}|")
+
     return {
         'status': 'Success',
         'status_code': 200,
