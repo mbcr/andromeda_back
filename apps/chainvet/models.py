@@ -4,9 +4,11 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.utils import timezone as django_tz
 from django.utils.crypto import get_random_string
-from apps.utilities import trocador_api
+
+from datetime import datetime
 import logging
 
+from apps.utilities import trocador_api, api_crystal_blockchain
 
 
 class Order(models.Model):
@@ -165,3 +167,37 @@ class Assessment(models.Model):
         else:
             return '-'
 
+    def update_assessment(self):
+        error_log = logging.getLogger('error_logger')
+        if self.status_assessment in ['ready']:
+            return
+        try:
+            cbc_response = api_crystal_blockchain.check_assessment_by_id(self.assessment_id)
+        except Exception as e:
+            error_log.debug(f"apps.chainvet.models>Assessment: Code MAU87 Error in update_assessment for assessment {str(self)}: {e}")
+
+        if cbc_response.get('status') == 'Error':
+            error_log.debug(f"apps.chainvet.models>Assessment: Code MAU88. Error message: {cbc_response.get('message')}")
+            return
+        
+        assessment_data = cbc_response.get('payload').get('data')
+
+        if assessment_data.get('status') not in ['ready']:
+            self.assessment_updated_at = django_tz.now()
+            self.save()
+            return
+        
+        updated_at_datetime = datetime.utcfromtimestamp(assessment_data['updated_at'])
+        self.assessment_updated_at = updated_at_datetime,
+        self.response_data = assessment_data,
+        self.risk_grade = assessment_data['alert_grade'],
+        self.risk_score = assessment_data['riskscore'],
+        self.risk_signals = assessment_data['signals'],
+        self.status_assessment = assessment_data['status'],
+        if self.assessment_type == "transaction":
+            self.transaction_volume_coin = assessment_data['amount']
+            self.transaction_volume_fiat = assessment_data['fiat']
+            self.transaction_volume_fiat_currency_code = assessment_data['fiat_code_effective']
+            self.risk_volume_coin = assessment_data['risky_volume']
+            self.risk_volume_fiat = assessment_data['risky_volume_fiat']
+        self.save()
