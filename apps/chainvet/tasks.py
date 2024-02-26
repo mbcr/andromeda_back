@@ -1,17 +1,19 @@
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from datetime import datetime, timedelta
-
-import time
 from django.utils import timezone as django_tz
 from django.conf import settings
-from apps.utilities import system_messenger
 
+from datetime import datetime, timedelta
+import time
+import logging
+
+from apps.utilities import system_messenger
 from apps.chainvet import models as chainvet_models
 from apps.utilities import trocador_api
 
 error_logger = get_task_logger('error_logger')
 
+logger = logging.getLogger('info_logger')
 
 @shared_task(name = "check_unpaid_orders_for_payments")
 def check_payments():
@@ -81,3 +83,26 @@ def check_payments():
     except Exception as e:
         error_logger.debug("Error in check_unpaid_orders_for_payments: %s", e)
         return "Failed"
+
+
+@shared_task(name = "update_non_ready_assessments")
+def check_payments():
+    non_ready_assessments = chainvet_models.Assessment.objects.all().exclude(status='ready')
+    if not non_ready_assessments.exists():
+        return "No non-ready assessments found."
+    try:
+        update_errors = []
+        for assessment in non_ready_assessments[:20]:
+            try:
+                assessment.update_assessment()
+            except Exception as e:
+                update_errors.append({
+                    'assessment_id': assessment.assessment_id,
+                    'error': str(e)
+                })
+        if update_errors:
+            error_logger.debug("apps.chainvet.tasks.update_non_ready_assessments> Errors in updating assessments: %s", update_errors)
+            return f"Errors occurred: {update_errors}"
+    except Exception as e:
+        error_logger.debug("apps.chainvet.tasks.update_non_ready_assessments> Error in updating non ready assessments: %s", str(e))
+    return "All non-ready assessments updated successfully."

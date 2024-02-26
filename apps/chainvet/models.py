@@ -116,7 +116,7 @@ class Order(models.Model):
     def affiliate_income_share_usd_cents(self):
         if self.affiliate:
             order_margin = self.total_price_usd_cents - (80 * self.number_of_credits)
-            return order_margin * self.affiliate.income_share / 100
+            return order_margin * self.affiliate.income_share / 10000
         else:
             return 0
 

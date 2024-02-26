@@ -35,5 +35,9 @@ app.conf.beat_schedule = {
         # Function Arguments 
         # 'args': ("Hello",) 
     },
+    'update-new-assessments': {
+        'task': 'update_non_ready_assessments',
+        'schedule': 60 * 3,
+    }
 }  
 
