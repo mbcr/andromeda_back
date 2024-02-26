@@ -48,7 +48,10 @@ class AssessmentListSerializer(serializers.ModelSerializer):
     risk_score = serializers.SerializerMethodField()
 
     def get_risk_score(self, obj):
-        return f"{obj.risk_score * 100:.1f}%"
+        if obj.risk_score is None:
+            return '-'
+        else:
+            return f"{obj.risk_score * 100:.1f}%"
 
     class Meta:
         model = Assessment
