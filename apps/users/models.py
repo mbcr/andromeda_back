@@ -54,8 +54,10 @@ def get_price_in_usd_cents(number_of_credits:int):
         25: 4000,
         50: 7000,
         100: 12000,
-        500: 55000,
-        1000: 99000,
+        # 500: 55000,
+        500: 50000,
+        # 1000: 99000,
+        1000: 90000
     }
     if number_of_credits in package_options:
         total_price_in_usd_cents = package_options.get(number_of_credits)
