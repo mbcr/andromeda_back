@@ -19,8 +19,6 @@ import logging
 import requests
 from datetime import datetime
 from coinpaprika.client import Client as CoinpaprikaClient
-import logging
-from pprint import pprint
 
 
 def get_price_in_usd_cents(number_of_credits:int):
@@ -210,8 +208,9 @@ class CreditOwnerMixin:
                 return True, existing_assessment
             else:
                 return False, None
-        
-        error_logger = logging.getLogger('error_logger')
+        def generate_unique_code(length:int=12):
+            chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789'
+            return get_random_string(length, chars)
 
         # Parameter checks
         if assessment_type not in ['address', 'transaction']:
@@ -230,9 +229,9 @@ class CreditOwnerMixin:
             return payload
         # Set name based on owner type
         if self.owner_type() == 'User':
-            name = f"test_user"
+            name = generate_unique_code(length=12)
         elif self.owner_type() == 'AccessCode':
-            name = f"test_user"
+            name = generate_unique_code(length=12)
         else:
             return {
                 'status': 'Error',
@@ -304,6 +303,7 @@ class CreditOwnerMixin:
                     risk_signals = response_data['data']['signals'],
                     status_assessment = response_data['data']['status'],
                     assessment_id = response_data['data']['id'],
+                    client_name = name,
                 )
                 if self.owner_type() == 'User':
                     new_assessment.user = self
