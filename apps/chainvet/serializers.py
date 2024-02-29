@@ -1,9 +1,10 @@
 from rest_framework import serializers
+from datetime import datetime
+
 from .models import Assessment, Order
+from .services import grade_risk_level
 from apps.users import models as user_models
 
-from rest_framework import serializers
-from datetime import datetime
 
 class AccessCodeFullSerializer(serializers.ModelSerializer):
     orders = serializers.SerializerMethodField()
@@ -52,6 +53,11 @@ class AssessmentListSerializer(serializers.ModelSerializer):
             return '-'
         else:
             return f"{obj.risk_score * 100:.1f}%"
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['risk_grade'] = grade_risk_level(instance.risk_signals)
+        return representation
 
     class Meta:
         model = Assessment
@@ -75,6 +81,8 @@ class AssessmentListSerializer(serializers.ModelSerializer):
             'transaction_volume_fiat',
             'transaction_volume_fiat_currency_code',
         ]
+
+
 
 class CustomUserFullSerializer(serializers.ModelSerializer):
     orders = serializers.SerializerMethodField()
