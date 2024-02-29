@@ -57,26 +57,27 @@ def assess_risk_grade():
                 "wallet": 0.008
             }
 
+    ## Risk thresholds are derived from sampling of assessments.
+    # For the lower bound (delineating Low and Middle grades), sample transactions that have gone through, and get the maximum of each category.
+    # For the upper bound (delineating Middle and High grades), sample transactions that have been halted due to AML, and get the lower of each triggering category. <-- This has not been done yet (arbitrary)
     risk_thresholds = {
-        "atm": (0.1, 0.2),
+        "atm": (0.01, 1),
         "child_exploitation": (0.002, 0.01),
-        "dark_market": (0.01, 0.04),
-        "dark_service": (0.01, 0.04),
-        "enforcement_action": (0.02, 0.04),
-        "exchange_fraudulent": (0.05, 0.1),
-        "exchange_unlicensed": (0.2, 0.4),
+        "dark_market": (0.006, 0.015),
+        "dark_service": (0.006, 0.015),
+        "enforcement_action": (0.012, 0.036),
+        "exchange_fraudulent": (0.006, 0.02),
+        "exchange_unlicensed": (0.8, 1.0),
         "gambling": (0.02, 0.04),
-        "illegal_service": (0.02, 0.04),
-        "liquidity_pools": (0.04, 0.12),
-        "mixer": (0.02, 0.06),
-        "other": (0.2, 0.6),
-        "p2p_exchange_unlicensed": (0.1, 0.3),
-        "ransom": (0.002, 0.02),
-        "sanctions": (0.002, 0.01),
-        "scam": (0.002, 0.02),
-        "stolen_coins": (0.002, 0.02),
-        "terrorism_financing": (0.002, 0.01),
-        "wallet": (0.4, 0.8),
+        "illegal_service": (0.006, 0.015),
+        "liquidity_pools": (0.02, 0.04),
+        "mixer": (0.003, 0.012),
+        "p2p_exchange_unlicensed": (0.35, 1),
+        "ransom": (0.001, 0.005),
+        "sanctions": (0.001, 0.005),
+        "scam": (0.001, 0.005),
+        "stolen_coins": (0.001, 0.005),
+        "terrorism_financing": (0.001, 0.005),
     }
 
     weighed_signals = {}
