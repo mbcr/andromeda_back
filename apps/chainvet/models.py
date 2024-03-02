@@ -10,7 +10,8 @@ import logging
 
 from apps.utilities import trocador_api, api_crystal_blockchain
 
-
+class OrderAdmin(admin.ModelAdmin):
+    list_filter=['created_at', 'status', 'is_paid']
 class Order(models.Model):
     class OwnerType(models.TextChoices):
         USER = 'User', 'User'
