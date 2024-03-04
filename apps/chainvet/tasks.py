@@ -10,6 +10,7 @@ import logging
 from apps.utilities import system_messenger
 from apps.chainvet import models as chainvet_models
 from apps.utilities import trocador_api
+from apps.users.models import ConfigVariable
 
 error_logger = get_task_logger('error_logger')
 
@@ -38,7 +39,9 @@ def check_payments():
 
     def batch_check():
         try: # Get a list of all anonpay_ids of unpaid orders from the db
-            unpaid_orders_with_anonpay_id = chainvet_models.Order.objects.filter(is_paid=False).exclude(anonpay_id__isnull=True).exclude(anonpay_id='')
+            time_window_update_anonpay_days = int(ConfigVariable.objects.get(name='time_window_update_anonpay_days').value)
+            date_cutoff = django_tz.now() - timedelta(days=time_window_update_anonpay_days)
+            unpaid_orders_with_anonpay_id = chainvet_models.Order.objects.filter(is_paid=False, created_at__gte=date_cutoff).exclude(anonpay_id__isnull=True).exclude(anonpay_id='')
             anonpay_ids = list(unpaid_orders_with_anonpay_id.values_list('anonpay_id', flat=True))
         except Exception as e:
             raise Exception("apps.chainvet.tasks.checkpayments.batch_check> Failed to get anonpay_ids from db and prepare list for batch check.")
