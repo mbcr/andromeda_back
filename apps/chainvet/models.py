@@ -29,7 +29,7 @@ class CreatedAfterLaunchFilter(admin.SimpleListFilter):
         Returns the filtered queryset based on the value provided in the query string.
         """
         if self.value() == 'created_after_launch':
-            cutoff_date = timezone.datetime(2024, 2, 29)
+            cutoff_date = django_tz.datetime(2024, 2, 29)
             return queryset.filter(created_at__gt=cutoff_date)
         return queryset
 class OrderAdmin(admin.ModelAdmin):

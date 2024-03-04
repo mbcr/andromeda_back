@@ -212,6 +212,7 @@ class CreditOwnerMixin:
             chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789'
             return get_random_string(length, chars)
 
+        error_logger = logging.getLogger('error_logger')
         # Parameter checks
         if assessment_type not in ['address', 'transaction']:
             return {
