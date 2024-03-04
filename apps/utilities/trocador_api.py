@@ -39,7 +39,7 @@ def get_trade_status_batch(trade_ids: list):
         
         end_time = now()
         duration = (end_time - start_time).total_seconds()
-        logger.debug(f"trocador_api>get_trade_status_batch: trade_ids: {trade_ids}, response_code: {response.status_code}. (Duration: {duration} seconds)")
+        logger.debug(f"trocador_api>get_trade_status_batch: trade_ids ({len(trade_ids)}): {trade_ids}, response_code: {response.status_code}. (Duration: {duration} seconds)")
         return response
     except Exception as e:
         end_time = now()
