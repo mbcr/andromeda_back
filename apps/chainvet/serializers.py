@@ -56,6 +56,8 @@ class AssessmentListSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        if not instance.risk_signals:
+            instance.risk_signals = {"atm": 0.0, "scam": 0.0, "miner": 0.0, "mixer": 0.0, "other": 0.0, "ransom": 0.0, "wallet": 0.0, "payment": 0.0, "gambling": 0.0, "sanctions": 0.0, "dark_market": 0.0, "marketplace": 0.0, "dark_service": 0.0, "stolen_coins": 0.0, "seized_assets": 0.0, "illegal_service": 0.0, "liquidity_pools": 0.0, "exchange_licensed": 0.0, "child_exploitation": 0.0, "enforcement_action": 0.0, "exchange_fraudulent": 0.0, "exchange_unlicensed": 0.0, "terrorism_financing": 0.0, "p2p_exchange_licensed": 0.0, "p2p_exchange_unlicensed": 0.0}
         representation['risk_grade'] = grade_risk_level(instance.risk_signals)
         return representation
 
