@@ -72,6 +72,8 @@ def fetch_price_in_crypto(price_in_usd_cents:int, payment_coin_paprika_name:str)
         conversion_payload = coinpaprika_client.price_converter(base_currency_id='usd-us-dollars', quote_currency_id=payment_coin_paprika_name, amount=price_in_usd_cents/100)
         price_in_crypto = conversion_payload.get('price')
     except Exception as e:
+        error_logger = logging.getLogger('error_logger')
+        error_logger.debug(f'apps.users.models.fetch_price_in_crypto: Error fetching price in crypto for {price_in_usd_cents} USD cents and {payment_coin_paprika_name} as payment coin. Error: {e}')
         raise Exception(f'Error fetching price in crypto for {price_in_usd_cents} USD cents and {payment_coin_paprika_name} as payment coin. Error: {e}')
     
     return price_in_crypto
