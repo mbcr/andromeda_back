@@ -12,9 +12,9 @@ from apps.chainvet import models as chainvet_models
 from apps.utilities import trocador_api
 from apps.users.models import ConfigVariable
 
-error_logger = get_task_logger('error_logger')
 
 logger = logging.getLogger('info_logger')
+error_logger = get_task_logger('error_logger')
 
 @shared_task(name = "check_unpaid_orders_for_payments")
 def check_payments():
@@ -45,11 +45,19 @@ def check_payments():
             anonpay_ids = list(unpaid_orders_with_anonpay_id.values_list('anonpay_id', flat=True))
         except Exception as e:
             raise Exception("apps.chainvet.tasks.checkpayments.batch_check> Failed to get anonpay_ids from db and prepare list for batch check.")
-        try: # Make a request to the API and decode the json response
+        
+        try: # Make a request to the Trocador API
             response = trocador_api.get_trade_status_batch(anonpay_ids)
+        except Exception as e:
+            error_logger.debug(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to get response from trocador_api.get_trade_status_batch. Error was: {e}.")
+            raise Exception(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to get response from trocador_api.get_trade_status_batch. Request was: {str(anonpay_ids)}.")
+        
+        try: # Decode the response    
             response_data = response.json()
         except Exception as e:
-            raise Exception(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to get response from trocador_api.get_trade_status_batch. Request was: {str(anonpay_ids)}.")
+            error_logger.debug(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to decode the response from trocador_api.get_trade_status_batch. Error was: {e}. Response was {response.text}.")
+            raise Exception(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to decode the response from trocador_api.get_trade_status_batch. Response code was {response.status_code}. Error was: {e}")
+        
         try: #Process the response, extracting each trade status and updating the corresponding order in the db.
             trade_objects = response_data.get('status')
             for trade_id in anonpay_ids:
