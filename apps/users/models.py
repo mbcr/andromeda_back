@@ -268,6 +268,9 @@ class CreditOwnerMixin:
                 "name": name,
                 "currency": currency                
             }
+        
+        if currency == 'trx': # Specify the token_id for TRX transactions (9 indicates USDT)
+            cbc_request_data['token_id'] = 9
 
         # Check if assessment already exists
         assessment_exists, existing_assessment = assessment_already_exists(cbc_request_data)
