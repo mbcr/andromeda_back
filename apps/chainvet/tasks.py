@@ -86,7 +86,7 @@ def check_payments():
                     target_order.status_updated_at = django_tz.now()
                     target_order.save()
         except Exception as e:
-            raise Exception("apps.chainvet.tasks.checkpayments.batch_check> Failed to process the response from trocador_api.get_trade_status_batch.")
+            raise Exception(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to process the response from trocador_api.get_trade_status_batch. Error: {e}. Response.json() was : {response_data}")
         return "Success"
 
     try:
