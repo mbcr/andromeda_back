@@ -50,7 +50,7 @@ def check_payments():
             response = trocador_api.get_trade_status_batch(anonpay_ids)
         except Exception as e:
             error_logger.debug(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to get response from trocador_api.get_trade_status_batch. Error was: {e}.")
-            raise Exception(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to get response from trocador_api.get_trade_status_batch. Request was: {str(anonpay_ids)}.")
+            raise Exception(f"apps.chainvet.tasks.checkpayments.batch_check> Failed to get response from trocador_api.get_trade_status_batch. Request was: {str(anonpay_ids)}")
         
         try: # Decode the response    
             response_data = response.json()

@@ -35,7 +35,7 @@ def get_trade_status_batch(trade_ids: list):
         }
         response = requests.post(url, json=request_data)
         if response.status_code != 200:
-            raise Exception(f"trocador_api>get_trade_status_batch: Failed to get response from trocador_api.get_trade_status_batch. Status code was: {response.status_code}. Request was: {request_data}.")
+            raise Exception(f"trocador_api>get_trade_status_batch: VCW12 Failed to get response from trocador_api.get_trade_status_batch. Status code was: {response.status_code}. Request was: {request_data}.")
         
         end_time = now()
         duration = (end_time - start_time).total_seconds()
@@ -44,5 +44,5 @@ def get_trade_status_batch(trade_ids: list):
     except Exception as e:
         end_time = now()
         duration = (end_time - start_time).total_seconds()
-        logger.debug(f"trocador_api>get_trade_status_batch: FAILED to get trade_ids_str: {trade_ids_str}, response_code: {response.status_code}. Raising error. (Duration: {duration} seconds)")
-        raise Exception(f"Failed to get response from trocador_api.get_trade_status_batch. Request was: {request_data}.")
+        error_logger.debug(f"trocador_api>get_trade_status_batch: FAILED to get trade_ids_str: {trade_ids_str}, response_code: {response.status_code}. Duration: {duration} seconds. Error: {e}")
+        raise Exception(f"Failed to get response from trocador_api.get_trade_status_batch. Error was: {e}. Request was: {request_data}.")
