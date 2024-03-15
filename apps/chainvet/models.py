@@ -139,6 +139,7 @@ class Assessment(models.Model):
     transaction_hash = models.CharField(max_length=128, null=True, blank=True)
     currency = models.CharField(max_length=10, null=True, blank=True)
     client_name = models.CharField(max_length=12, null=True, blank=True)
+    is_mock = models.BooleanField(default=False)
 
     status_assessment = models.CharField(max_length=100, null=True)
     risk_score = models.FloatField(null=True, blank=True)
