@@ -32,7 +32,7 @@ class AffiliateUserEmailFilter(admin.SimpleListFilter):
             return queryset.filter(access_code__affiliate_origin__user__email=self.value())
         return queryset
 class AssessmentAdmin(admin.ModelAdmin):
-    list_filter = [AffiliateUserEmailFilter, 'user', 'access_code', 'type_of_assessment', ]
+    list_filter = [AffiliateUserEmailFilter, 'user', 'access_code', 'type_of_assessment', 'is_mock' ]
 admin.site.register(Assessment, AssessmentAdmin)
 
 
