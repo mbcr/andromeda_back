@@ -10,30 +10,7 @@ import logging
 
 from apps.utilities import trocador_api, api_crystal_blockchain
 
-class CreatedAfterLaunchFilter(admin.SimpleListFilter):
-    title = 'Since launch'  # The title displayed on the admin
-    parameter_name = 'created_after_launch'  # URL parameter
 
-    def lookups(self, request, model_admin):
-        """
-        Returns a list of tuples. The first element in each tuple is the coded value 
-        for the option that will appear in the URL query. The second element is the 
-        human-readable name for the option that will appear in the right sidebar.
-        """
-        return (
-            ('created_after_launch', 'After Launch'),
-        )
-
-    def queryset(self, request, queryset):
-        """
-        Returns the filtered queryset based on the value provided in the query string.
-        """
-        if self.value() == 'created_after_launch':
-            cutoff_date = django_tz.datetime(2024, 2, 29)
-            return queryset.filter(created_at__gt=cutoff_date)
-        return queryset
-class OrderAdmin(admin.ModelAdmin):
-    list_filter=['created_at', 'status', 'is_paid', CreatedAfterLaunchFilter]
 class Order(models.Model):
     class OwnerType(models.TextChoices):
         USER = 'User', 'User'
@@ -143,8 +120,7 @@ class Order(models.Model):
         else:
             return 0
 
-class AssessmentAdmin(admin.ModelAdmin):
-    list_filter = ['user', 'access_code', 'type_of_assessment']
+
 class Assessment(models.Model):
     TYPE_CHOICES = [
         ('address', 'Address'),
