@@ -219,6 +219,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
+        'general': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'general.log',
+            'formatter': 'verbose',
+        },
         'api_calls_trocador': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
