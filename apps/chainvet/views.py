@@ -349,6 +349,7 @@ def create_new_assessment_for_access_code(request):
             assessment_type = request.data.get('assessment_type'),
             address = request.data.get('address'),
             currency = request.data.get('currency'),
+            network = request.data.get('network'),
             tx_hash = request.data.get('tx_hash'),
             override_existing_assessment = request.data.get('override_existing_assessment') == "True"
         )
@@ -358,7 +359,6 @@ def create_new_assessment_for_access_code(request):
             return Response(creation_result.get('payload'), status=status.HTTP_200_OK)
         else:
             return Response(creation_result.get('message'), status=status.HTTP_400_BAD_REQUEST)
-        print('HERE?')
     except Exception as e:
         logger = logging.getLogger('error_logger')
         log_data = {
@@ -368,6 +368,7 @@ def create_new_assessment_for_access_code(request):
             'assessment_type': request.data.get('assessment_type'),
             'address': request.data.get('address'),
             'currency': request.data.get('currency'),
+            'network': request.data.get('network'),
             'tx_hash': request.data.get('tx_hash'),
         }
         logger.debug(f'apps.chainvet.views: create_new_assessment_for_access_code; error location code: 4J9Y1; log_data: {log_data}; error message: {str(e)}')
@@ -413,11 +414,11 @@ def create_new_assessment_for_user(request):
         return Response({"detail": "User not identified"}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        print(f'requesting user: {requesting_user}')
         creation_result = requesting_user.create_new_assessment(
             assessment_type = request.data.get('assessment_type'),
             address = request.data.get('address'),
             currency = request.data.get('currency'),
+            network = request.data.get('network'),
             tx_hash = request.data.get('tx_hash'),
             override_existing_assessment = request.data.get('override_existing_assessment') == "True"
         )
@@ -435,6 +436,7 @@ def create_new_assessment_for_user(request):
             'assessment_type': request.data.get('assessment_type'),
             'address': request.data.get('address'),
             'currency': request.data.get('currency'),
+            'network': request.data.get('network'),
             'tx_hash': request.data.get('tx_hash'),
         }
         logger.debug(f'apps.chainvet.views: create_new_assessment_for_user; error location code: 4J9Y2; log_data: {log_data}; error message: {str(e)}')

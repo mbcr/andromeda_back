@@ -27,7 +27,7 @@ def new_assessment(cbc_request_data: dict)->dict:
         api_mocking_is_active = False
     
     if api_mocking_is_active:
-        print('CreditOwnerMixin.create_new_assessment. External API call is being mocked')
+        # print('CreditOwnerMixin.create_new_assessment. External API call is being mocked')
         from apps.chainvet.models import Assessment
         assessment_id = 'MockAssessmentID#'+str(Assessment.objects.last().id + 1)
         if cbc_request_data.get('direction') == 'deposit':

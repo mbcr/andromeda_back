@@ -194,7 +194,7 @@ class CreditOwnerMixin:
             api_key.assigned_credits += number_of_credits
             self.save()
             api_key.save()
-    def create_new_assessment(self, assessment_type:str, address:str, currency:str, tx_hash:str=None, override_existing_assessment:bool=False):
+    def create_new_assessment(self, assessment_type:str, address:str, currency:str, network:str=None, tx_hash:str=None, override_existing_assessment:bool=False):
         def assessment_already_exists(cbc_request_data: dict) -> bool:
             if assessment_type == "address":
                 request_transaction_hash = None
@@ -213,14 +213,78 @@ class CreditOwnerMixin:
         def generate_unique_code(length:int=12):
             chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789'
             return get_random_string(length, chars)
+        def validate_currency_and_network(currency:str, network:str):
+            # Grandfathered currencies (until tests are performed 2024.03.18):
+            if network is None and currency in ['btc', 'ltc', 'eth', 'sol', 'matic', 'trx']:
+                return True, None
 
+            # Standardize parameters to lower case
+            currency = currency.lower()
+            network = network.lower()
+            # Declare valid values of currency and network
+            valid_currencies = ['bnb', 'btc', 'eth', 'ltc', 'matic', 'sol', 'trx', 'usdc', 'usdt']
+            valid_networks = ['bsc', 'btc', 'erc20', 'eth', 'ltc', 'matic', 'sol', 'trx']
+            # Declare valid pairs of currency and network
+            valid_pairs = [('btc', 'btc'), ('ltc', 'ltc'), ('eth', 'eth'), ('sol', 'sol'), ('bnb', 'bsc'), ('matic', 'matic'), ('trx', 'trx'), ('usdc', 'erc20'), ('usdt', 'erc20'), ('usdt', 'bsc'), ('usdt', 'trx')]
+            
+
+            # Check if the currency and network are valid
+            if currency not in valid_currencies:
+                return False, f"Error: currency must be one of {valid_currencies}. Value provided = {currency}"
+            if network not in valid_networks:
+                return False, f"Error: network must be one of {valid_networks}. Value provided = {network}"
+            if (currency, network) not in valid_pairs:
+                return False, f"Error: currency and network pair not valid. Currency = {currency}, Network = {network}. Valid pairs are: {valid_pairs}"
+            return True, None
+        def cbc_currency_and_network_transfer_function(currency:str, network:str):
+            # Grandfathered currencies (until tests are performed 2024.03.18):
+            if network is None and currency in ['btc', 'ltc', 'eth', 'sol', 'matic', 'trx']:
+                return {'currency': currency, 'token_id': 0}
+
+            currency = currency.lower()
+            network = network.lower()
+            currency_network = f"{currency}_{network}"
+            # Declare the transfer function from currency and network to CBC currency and token_id
+            cbc_currency_network_tf = {
+                'btc_btc': {'currency': 'btc', 'token_id': 0},
+                'ltc_ltc': {'currency': 'ltc', 'token_id': 0},
+                'eth_eth': {'currency': 'eth', 'token_id': 0},
+                'sol_sol': {'currency': 'sol', 'token_id': 0},
+                'bnb_bsc': {'currency': 'bsc', 'token_id': 0},
+                'matic_matic': {'currency': 'matic', 'token_id': 0},
+                'trx_trx': {'currency': 'trx', 'token_id': 0},
+                'usdc_erc20': {'currency': 'eth', 'token_id': 138052},
+                'usdt_erc20': {'currency': 'eth', 'token_id': 94252},
+                'usdt_bsc': {'currency': 'bsc', 'token_id': 9},
+                'usdt_trx': {'currency': 'trx', 'token_id': 9},
+            }
+            return cbc_currency_network_tf.get(currency_network)
+        
         error_logger = logging.getLogger('error_logger')
+        logger = logging.getLogger('general')
+        # print(f'chainvet.models.CreditOwnerMixin.create_new_assessment: Currency = {currency}, Network = {network}')
         # Parameter checks
         if assessment_type not in ['address', 'transaction']:
             return {
                 'status': 'Error',
                 'message': f"Error: assessment_type must be either 'address' or 'transaction'. Value provided = {assessment_type}"
             }
+        try:
+            currency_and_network_are_valid, currency_and_network_validation_error = validate_currency_and_network(currency, network)
+            if not currency_and_network_are_valid:
+                logger.debug(f'apps.users.models.CreditOwner.mixin.create_new_assessment: validate_currency_and_network returned false for Currency {currency} and Network {network}. Validation error: {currency_and_network_validation_error}')
+                return {
+                    'status': 'Error',
+                    'message': currency_and_network_validation_error
+                }
+        except Exception as e:
+            error_logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error running validate_currency_and_network for data: {currency}, {network}. Error: {e}')
+            return {
+                'status': 'Error',
+                'message': f'Error running validate_currency_and_network for values: {currency}, {network}. No credit was subtracted. Please contact support with code HGF32'
+            }
+
+
 
         # Check if there are enough credits available
         available_credits = self.set_credit_cache()
@@ -250,13 +314,23 @@ class CreditOwnerMixin:
                 }
 
         # Prepare the request data for the CBC API
+        try:
+            cbc_format_data = cbc_currency_and_network_transfer_function(currency, network)
+        except Exception as e:
+            error_logger.debug(f'apps.users.models.CreditOwnerMixin.create_new_assessment: Error running cbc_currency_and_network_transfer_function for data: {currency}, {network}. Error: {e}. Currency was passed directly, with token_id=0')
+            cbc_format_data = {
+                'currency': currency,
+                'token_id': 0
+            }
+
         if assessment_type == "address":
             direction = "withdrawal"
             cbc_request_data = {
                 "direction": direction,
                 "address": address,
                 "name": name,
-                "currency": currency
+                "currency": cbc_format_data['currency'],
+                "token_id": cbc_format_data['token_id']
             }
         else:
             direction = "deposit"
@@ -266,15 +340,17 @@ class CreditOwnerMixin:
                 "address": address,
                 "tx": tx,
                 "name": name,
-                "currency": currency                
+                "currency": cbc_format_data['currency'],
+                "token_id": cbc_format_data['token_id']                
             }
         
-        if currency == 'trx': # Specify the token_id for TRX transactions (9 indicates USDT)
+        if currency == 'trx' and network is None: # Specify the token_id for TRX transactions (9 indicates USDT)
             cbc_request_data['token_id'] = 9
 
         # Check if assessment already exists
         assessment_exists, existing_assessment = assessment_already_exists(cbc_request_data)
         if assessment_exists and not override_existing_assessment:
+            from apps.chainvet.serializers import AssessmentListSerializer
             return {
                 'status': 'Warning',
                 'payload': AssessmentListSerializer(existing_assessment).data,
