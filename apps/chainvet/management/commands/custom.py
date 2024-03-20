@@ -3,6 +3,7 @@ from django.conf import settings
 from pprint import pprint
 
 from apps.chainvet import models
+from apps.users import models as user_models
 
 
 class Command(BaseCommand):
@@ -42,11 +43,11 @@ class Command(BaseCommand):
         Result: Prints a totalling of all liabilities, as well as a list of each access code and the amount of unused credits it has.
         """
 
-        users_with_paid_orders = models.CustomUser.objects.filter(orders__is_paid=True).distinct()
+        users_with_paid_orders = user_models.CustomUser.objects.filter(orders__is_paid=True).distinct()
         user_emails_to_ignore = ['mail@trocador.app']
         users_with_paid_orders = users_with_paid_orders.exclude(email__in=user_emails_to_ignore)
 
-        access_codes_with_paid_orders = models.AccessCode.objects.filter(orders__is_paid=True).distinct()
+        access_codes_with_paid_orders = user_models.AccessCode.objects.filter(orders__is_paid=True).distinct()
         access_codes_to_ignore = ['5VWDtKVYmX9jgBAv', 'yVQqqEVPt2OFEkbG', 'k7os7vGY3W6nYfoS'] # Trocador main access code and test accounts
         access_codes_with_paid_orders = access_codes_with_paid_orders.exclude(code__in=access_codes_to_ignore)
 
