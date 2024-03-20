@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+from django.db.models import Q
 from pprint import pprint
 
 from apps.chainvet import models
@@ -12,7 +13,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('action', help='Specify the action to perform')
-        # parser.add_argument('extra_argument_1', nargs='+', help='First argument for the selected action')
+        parser.add_argument('extra_argument_1', nargs='+', help='First argument for the selected action')
 
     def handle(self, *args, **options):
         if options.get('action') is None:
@@ -24,16 +25,17 @@ class Command(BaseCommand):
 
         available_actions = {
             'display_liabilities': self.display_liabilities,
+            'search': self.search_assessments,
         }
 
         if action not in available_actions:
             self.stdout.write(self.style.ERROR(f'''Action '{action}' not supported. Available actions: {", ".join(available_actions.keys())}'''))
             return
         
-        # if action == 'action_name_requiring_argument':
-        #     parameter = options['extra_argument_1'][0]
-        #     available_actions[action](parameter)
-        #     return
+        if action == 'search':
+            parameter = options['extra_argument_1'][0]
+            available_actions[action](parameter)
+            return
         available_actions[action]()
 
     def display_liabilities(self):
@@ -80,6 +82,24 @@ class Command(BaseCommand):
         self.stdout.write(f'Total used: {total_used_credits}.')
         self.stdout.write(f'Total liabilities: {total_liabilities_credits} credits, {total_liabilities_credits*60/100:.2f} USD')
 
-    
+    def search_assessments(self, search_term:str):
+        '''
+        Purpose: Search for assessments by address hash, transaction hash, or access code.
+        Args: search_term: str - The search term to look for.
+        Result: Prints a list of assessments that match the search term.
+        '''
+        search_results = models.Assessment.objects.filter(
+            Q(address_hash__icontains=search_term) |
+            Q(transaction_hash__icontains=search_term) |
+            Q(access_code__code__icontains=search_term)
+        ).order_by('time_of_request')
+
+        if search_results:
+            self.stdout.write(f'Search results for "{search_term}":')
+            for result in search_results:
+                self.stdout.write(f'****Assessment ID: {result.id}, Date: {result.time_of_request.strftime("%Y-%m-%d %H:%M:%S")}\n    -   -  - --- -  -   -\n    AccessCode: {result.access_code}, Address: {result.address_hash}, T. Hash: {result.transaction_hash}, Risk score: {result.risk_score}, T.Volume coin: {result.transaction_volume_coin}, T.Volume fiat: {result.transaction_volume_fiat}\n    Risk Signals: {result.risk_signals}\n\n\n')
+        else:
+            self.stdout.write(f'No results found for "{search_term}".')
+
 
 
