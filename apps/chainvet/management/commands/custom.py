@@ -26,6 +26,7 @@ class Command(BaseCommand):
         available_actions = {
             'display_liabilities': self.display_liabilities,
             'search': self.search_assessments,
+            'show_assessments_without_network': self.show_assessments_without_network,
         }
 
         if action not in available_actions:
@@ -101,5 +102,30 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f'No results found for "{search_term}".')
 
-
+    def show_assessments_without_network(self):
+        '''
+        Purpose: Find assessments without a network specified.
+        Args: None
+        Result: Prints a list of assessments that do not have a network specified.
+        '''
+        assessments_without_network = models.Assessment.objects.filter(network__isnull=True)
+        if assessments_without_network:
+            self.stdout.write(f'Assessments without network specified:')
+            results = {}
+            for assessment in assessments_without_network:
+                try: 
+                    self.stdout.write(f"****Assessment ID: {assessment.id}, Currency: {assessment.currency}, Token ID: {assessment.response_data.get('data').get('token_id')}")
+                except:
+                    self.stdout.write(f'****Assessment ID: {assessment.id}, Currency: {assessment.currency}, Token ID: N/A')
+                currency_token_id = f"{assessment.currency} - {assessment.response_data.get('data').get('token_id')}" if assessment.response_data.get('data').get('token_id') else f'{assessment.currency}'
+                if currency_token_id not in results:
+                    results[currency_token_id] = 1
+                else:
+                    results[currency_token_id] += 1
+            self.stdout.write(f'Found {assessments_without_network.count()} assessments without network specified.')
+            self.stdout.write(f'Breakdown:')
+            for key, value in results.items():
+                self.stdout.write(f'    {key}: {value}')
+        else:
+            self.stdout.write(f'No assessments found without network specified.')
 
