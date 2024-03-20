@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.db.models import Q
+from django.db import transaction
+
 from pprint import pprint
 
 from apps.chainvet import models
@@ -27,6 +29,7 @@ class Command(BaseCommand):
             'display_liabilities': self.display_liabilities,
             'search': self.search_assessments,
             'show_assessments_without_network': self.show_assessments_without_network,
+            'populate_assessment_networks': self.populate_assessment_networks,
         }
 
         if action not in available_actions:
@@ -130,3 +133,59 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f'No assessments found without network specified.')
 
+    def populate_assessment_networks(self):
+        '''
+        Purpose: Populate the network field of assessments based on the currency field.
+        Args: None
+        Result: Updates the network field of assessments that do not have a network specified.
+        '''
+        assessments_without_network = models.Assessment.objects.filter(network__isnull=True)
+
+        if not assessments_without_network:
+            self.stdout.write(f'No assessments found without network specified.')
+            return
+        
+        for assessment in assessments_without_network:
+            if not assessment.response_data.get('data'):
+                self.stdout.write(f'Assessment {assessment.id} does not have response data. Currency: {assessment.currency}')
+                continue
+            try: 
+                currency_token_id = f"{assessment.currency} - {assessment.response_data.get('data').get('token_id')}"
+                transfer_function = {
+                    'BTC - None': 'BTC',
+                    'ETH - None': 'ETH',
+                    'LTC - None': 'LTC',
+                    'BTC - 0': 'BTC',
+                    'btc - 0': 'BTC',
+                    'btc - None': 'BTC',
+                    'ETH - 0': 'ETH',
+                    'eth - 0': 'ETH',
+                    'eth - None': 'ETH',
+                    'ltc - None': 'LTC',
+                    'ltc - 0': 'LTC',
+                    'SOL - 0': 'SOL',
+                    'sol - 0': 'SOL',
+                    'sol - None': 'SOL',
+                    'trx - 0': 'TRX',
+                    'usdt - 9': 'TRX',
+                    'usdt - 94252': 'ERC20',
+                    'matic - 0': 'MATIC',
+                    'matic - None': 'MATIC',
+                    'MATIC - None': 'MATIC',
+                    'trx - 9': 'TRX',
+                    'trx - None': 'TRX',
+                    'bsc - None': 'BSC',
+                    'xrp - None': 'XRP',
+                    'xlm - None': 'XLM',
+                    'ada - None': 'ADA',
+                    'bch - None': 'BCH',
+                    'usdt - None': 'USDT',
+                    'bnb - None': 'BNB',
+                }
+                with transaction.atomic():
+                    assessment.network = transfer_function[currency_token_id]
+                    assessment.network_populated_by_script = True
+                    assessment.save()
+            except Exception as e:
+                self.stdout.write(f'Error updating assessment {assessment.id}. Error: {str(e)}. Currency: {assessment.currency}')
+                continue

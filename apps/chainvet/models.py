@@ -141,6 +141,7 @@ class Assessment(models.Model):
     network = models.CharField(max_length=10, null=True, blank=True)
     client_name = models.CharField(max_length=12, null=True, blank=True)
     is_mock = models.BooleanField(default=False)
+    network_populated_by_script = models.BooleanField(default=False)
 
     status_assessment = models.CharField(max_length=100, null=True)
     risk_score = models.FloatField(null=True, blank=True)
