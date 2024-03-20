@@ -138,6 +138,7 @@ class Assessment(models.Model):
     address_hash = models.CharField(max_length=128, null=True, blank=True)
     transaction_hash = models.CharField(max_length=128, null=True, blank=True)
     currency = models.CharField(max_length=10, null=True, blank=True)
+    network = models.CharField(max_length=10, null=True, blank=True)
     client_name = models.CharField(max_length=12, null=True, blank=True)
     is_mock = models.BooleanField(default=False)
 
