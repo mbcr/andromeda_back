@@ -47,7 +47,7 @@ class Command(BaseCommand):
         user_emails_to_ignore = ['mail@trocador.app']
         users_with_paid_orders = users_with_paid_orders.exclude(email__in=user_emails_to_ignore)
 
-        access_codes_with_paid_orders = user_models.AccessCode.objects.filter(orders__is_paid=True).distinct()
+        access_codes_with_paid_orders = user_models.AccessCode.objects.filter(orders__is_paid=True).distinct().order_by('start_date')
         access_codes_to_ignore = ['5VWDtKVYmX9jgBAv', 'yVQqqEVPt2OFEkbG', 'k7os7vGY3W6nYfoS'] # Trocador main access code and test accounts
         access_codes_with_paid_orders = access_codes_with_paid_orders.exclude(code__in=access_codes_to_ignore)
 
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             available_credits = credit_owner.set_credit_cache()
             paid_credits = credit_owner.credits_paid_for
             used_credits = credit_owner.credits_used
-            self.stdout.write(f'    User {credit_owner} has bought {paid_credits} credits, and used {used_credits} of them. Liability: {available_credits}.')
+            self.stdout.write(f'    User {credit_owner} bought {paid_credits:4} credits,used {used_credits:4}. Liability: {available_credits:4}.')
             total_liabilities_credits += available_credits
             total_sold_credits += paid_credits
             total_used_credits += used_credits
@@ -68,7 +68,11 @@ class Command(BaseCommand):
             available_credits = credit_owner.set_credit_cache()
             paid_credits = credit_owner.credits_paid_for
             used_credits = credit_owner.credits_used
-            self.stdout.write(f'    Access Code {credit_owner} has bought {paid_credits} credits, and used {used_credits} of them. Start date: {credit_owner.start_date} Liability: {available_credits}.')
+            if used_credits:
+                last_assessment_date = credit_owner.assessments.order_by('-time_of_request').first().time_of_request
+                self.stdout.write(f"    AC {credit_owner} bought {paid_credits:4} credits, used {used_credits:4}. Start date: {credit_owner.start_date.strftime('%Y-%m-%d %H:%M:%S')}. Last check: {last_assessment_date.strftime('%Y-%m-%d %H:%M:%S')}. Liability: {available_credits:4}.")
+            else:
+                self.stdout.write(f"    AC {credit_owner} bought {paid_credits:4} credits, used {used_credits:4}. Start date: {credit_owner.start_date.strftime('%Y-%m-%d %H:%M:%S')}. Last check: --------N/A--------. Liability: {available_credits:4}.")
             total_liabilities_credits += available_credits
             total_sold_credits += paid_credits
             total_used_credits += used_credits
