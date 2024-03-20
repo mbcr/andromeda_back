@@ -377,6 +377,7 @@ class CreditOwnerMixin:
                 new_assessment = Assessment(
                     assessment_updated_at = updated_at_datetime,
                     currency = currency,
+                    network = network,
                     address_hash = address,
                     type_of_assessment = "address",
                     response_data = response_data,

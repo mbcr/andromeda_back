@@ -73,6 +73,7 @@ class AssessmentListSerializer(serializers.ModelSerializer):
             'transaction_hash',
             'transaction_hash_short',
             'currency',
+            'network',
             'status_assessment',
             'risk_score',
             'risk_grade',
