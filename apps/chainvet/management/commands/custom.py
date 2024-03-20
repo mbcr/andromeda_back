@@ -115,9 +115,10 @@ class Command(BaseCommand):
             for assessment in assessments_without_network:
                 try: 
                     self.stdout.write(f"****Assessment ID: {assessment.id}, Currency: {assessment.currency}, Token ID: {assessment.response_data.get('data').get('token_id')}")
+                    currency_token_id = f"{assessment.currency} - {assessment.response_data.get('data').get('token_id')}"
                 except:
                     self.stdout.write(f'****Assessment ID: {assessment.id}, Currency: {assessment.currency}, Token ID: N/A')
-                currency_token_id = f"{assessment.currency} - {assessment.response_data.get('data').get('token_id')}" if assessment.response_data.get('data').get('token_id') else f'{assessment.currency}'
+                    currency_token_id = f'{assessment.currency}'
                 if currency_token_id not in results:
                     results[currency_token_id] = 1
                 else:
