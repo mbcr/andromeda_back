@@ -215,17 +215,17 @@ class CreditOwnerMixin:
             return get_random_string(length, chars)
         def validate_currency_and_network(currency:str, network:str):
             # Grandfathered currencies (until tests are performed 2024.03.18):
-            if network is None and currency in ['btc', 'ltc', 'eth', 'sol', 'matic', 'trx']:
+            if network is None and currency in ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dash', 'doge', 'eth', 'ltc', 'matic', 'sol', 'ton', 'trx', 'xno']:
                 return True, None
 
             # Standardize parameters to lower case
             currency = currency.lower()
             network = network.lower()
             # Declare valid values of currency and network
-            valid_currencies = ['bnb', 'btc', 'eth', 'ltc', 'matic', 'sol', 'trx', 'usdc', 'usdt']
-            valid_networks = ['bsc', 'btc', 'erc20', 'eth', 'ltc', 'matic', 'sol', 'trx']
+            valid_currencies = ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dai', 'dash', 'doge', 'eth', 'ltc', 'matic', 'sol', 'ton', 'trx', 'usdc', 'usdt', 'xno']
+            valid_networks = ['ada', 'algo','arbitrum', 'atom', 'bsc', 'btc', 'dash', 'doge', 'erc20', 'eth', 'ltc', 'matic', 'nano', 'sol', 'ton', 'trx']
             # Declare valid pairs of currency and network
-            valid_pairs = [('btc', 'btc'), ('ltc', 'ltc'), ('eth', 'eth'), ('sol', 'sol'), ('bnb', 'bsc'), ('matic', 'matic'), ('trx', 'trx'), ('usdc', 'erc20'), ('usdt', 'erc20'), ('usdt', 'bsc'), ('usdt', 'trx')]
+            valid_pairs = [('ada', 'ada'), ('algo', 'algo'), ('arb', 'arbitrum'), ('atom', 'atom'), ('bnb', 'bsc'), ('btc', 'btc'), ('dai', 'bsc'), ('dai', 'erc20'), ('dash', 'dash'), ('doge', 'doge'), ('eth', 'eth'), ('ltc', 'ltc'), ('matic', 'matic'), ('sol', 'sol'), ('ton', 'ton'), ('trx', 'trx'), ('usdc', 'erc20'), ('usdc', 'matic'), ('usdt', 'trx'), ('usdt', 'erc20'), ('usdt', 'bsc'), ('xno', 'nano')]
             
 
             # Check if the currency and network are valid
@@ -238,7 +238,7 @@ class CreditOwnerMixin:
             return True, None
         def cbc_currency_and_network_transfer_function(currency:str, network:str):
             # Grandfathered currencies (until tests are performed 2024.03.18):
-            if network is None and currency in ['btc', 'ltc', 'eth', 'sol', 'matic', 'trx']:
+            if network is None and currency in ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dash', 'doge', 'eth', 'ltc', 'matic', 'sol', 'ton', 'trx', 'xno']:
                 return {'currency': currency, 'token_id': 0}
 
             currency = currency.lower()
@@ -246,17 +246,28 @@ class CreditOwnerMixin:
             currency_network = f"{currency}_{network}"
             # Declare the transfer function from currency and network to CBC currency and token_id
             cbc_currency_network_tf = {
-                'btc_btc': {'currency': 'btc', 'token_id': 0},
-                'ltc_ltc': {'currency': 'ltc', 'token_id': 0},
-                'eth_eth': {'currency': 'eth', 'token_id': 0},
-                'sol_sol': {'currency': 'sol', 'token_id': 0},
+                'ada_ada': {'currency': 'ada', 'token_id': 0},
+                'algo_algo': {'currency': 'algo', 'token_id': 0},
+                'arb_arbitrum': {'currency': 'arb', 'token_id': 0},
+                'atom_atom': {'currency': 'atom', 'token_id': 0},
                 'bnb_bsc': {'currency': 'bsc', 'token_id': 0},
+                'btc_btc': {'currency': 'btc', 'token_id': 0},
+                'dai_bsc': {'currency': 'bsc', 'token_id': 27},
+                'dai_erc20': {'currency': 'eth', 'token_id': 35399},
+                'dash_dash': {'currency': 'dash', 'token_id': 0},
+                'doge_doge': {'currency': 'doge', 'token_id': 0},
+                'eth_eth': {'currency': 'eth', 'token_id': 0},
+                'ltc_ltc': {'currency': 'ltc', 'token_id': 0},
                 'matic_matic': {'currency': 'matic', 'token_id': 0},
+                'sol_sol': {'currency': 'sol', 'token_id': 0},
+                'ton_ton': {'currency': 'ton', 'token_id': 0},
                 'trx_trx': {'currency': 'trx', 'token_id': 0},
                 'usdc_erc20': {'currency': 'eth', 'token_id': 138052},
-                'usdt_erc20': {'currency': 'eth', 'token_id': 94252},
+                'usdc_matic': {'currency': 'matic', 'token_id': 13},
                 'usdt_bsc': {'currency': 'bsc', 'token_id': 9},
+                'usdt_erc20': {'currency': 'eth', 'token_id': 94252},
                 'usdt_trx': {'currency': 'trx', 'token_id': 9},
+                'xno_nano': {'currency': 'xno', 'token_id': 0},
             }
             return cbc_currency_network_tf.get(currency_network)
         
