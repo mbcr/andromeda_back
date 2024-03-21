@@ -148,6 +148,17 @@ class Command(BaseCommand):
         for assessment in assessments_without_network:
             if not assessment.response_data.get('data'):
                 self.stdout.write(f'Assessment {assessment.id} does not have response data. Currency: {assessment.currency}')
+                transfer_function_no_data = {
+                    'btc': 'BTC',
+                    'dash': 'DASH',
+                    'sol': 'SOL',
+                    'doge': 'DOGE',
+                    'algo': 'ALGO',
+                }
+                with transaction.atomic():
+                    assessment.network = transfer_function_no_data[assessment.currency]
+                    assessment.network_populated_by_script = True
+                    assessment.save()
                 continue
             try: 
                 currency_token_id = f"{assessment.currency} - {assessment.response_data.get('data').get('token_id')}"
