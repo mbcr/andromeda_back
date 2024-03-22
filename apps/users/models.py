@@ -581,6 +581,7 @@ class AccessCode(models.Model, CreditOwnerMixin):
     start_date = models.DateTimeField(default=timezone.now)
     email = models.EmailField(null=True, blank=True)
     affiliate_origin = models.ForeignKey('users.Affiliate', on_delete=models.SET_NULL, null=True, blank=True)
+    is_soft_deleted = models.BooleanField(default=False)
 
     ## Computed Fields
     credits_paid_for = models.IntegerField(default=0)
