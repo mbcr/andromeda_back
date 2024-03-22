@@ -574,7 +574,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
 
 class AccessCodeManager(models.Manager):
     def authorised_for(self, requesting_affiliate: Affiliate):
-        return self.filter(affiliate_origin=requesting_affiliate)
+        return self.filter(affiliate_origin=requesting_affiliate).filter(is_soft_deleted=False)
 
 class AccessCode(models.Model, CreditOwnerMixin):
     code = models.CharField(max_length=16, unique=True, db_index=True)
