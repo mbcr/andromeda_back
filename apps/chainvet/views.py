@@ -337,7 +337,7 @@ def create_new_assessment_for_access_code(request):
         else:
             return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
 
-    authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
+    authorised_access_codes_list = user_models.AccessCode.objects.authorised_for(affiliate_origin=requesting_user.affiliate)
     target_access_code = request.data.get('access_code')
     target_entity = authorised_access_codes_list.filter(code=target_access_code).first()
 
@@ -601,7 +601,7 @@ def check_access_code_status(request):
         else:
             return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
     
-    authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
+    authorised_access_codes_list = user_models.AccessCode.objects.authorised_for(affiliate_origin=requesting_user.affiliate)
     target_access_code = request.data.get('access_code')
     try:
         target_entity = authorised_access_codes_list.get(code=target_access_code)
@@ -684,7 +684,7 @@ def check_assessment_list_for_access_code(request):
             return Response({"detail": "Credentials invalid or not provided. Please log in"}, status=status.HTTP_403_FORBIDDEN)
 
     # Check the requesting user's authorisation to access the target entity
-    authorised_access_codes_list = user_models.AccessCode.objects.filter(affiliate_origin=requesting_user.affiliate)
+    authorised_access_codes_list = user_models.AccessCode.objects.authorised_for(affiliate_origin=requesting_user.affiliate)
     target_access_code = request.data.get('access_code')
     try:
         target_entity = authorised_access_codes_list.get(code=target_access_code)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db import models
@@ -19,6 +21,8 @@ import logging
 import requests
 from datetime import datetime
 from coinpaprika.client import Client as CoinpaprikaClient
+
+
 
 
 def get_price_in_usd_cents(number_of_credits:int):
@@ -567,6 +571,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin, CreditOwnerMixin):
         group = Group.objects.get(name=group_name)
         self.groups.add(group)
 
+
+class AccessCodeManager(models.Manager):
+    def authorised_for(self, requesting_affiliate: Affiliate):
+        return self.filter(affiliate_origin=requesting_affiliate)
+
 class AccessCode(models.Model, CreditOwnerMixin):
     code = models.CharField(max_length=16, unique=True, db_index=True)
     start_date = models.DateTimeField(default=timezone.now)
@@ -577,6 +586,8 @@ class AccessCode(models.Model, CreditOwnerMixin):
     credits_paid_for = models.IntegerField(default=0)
     credits_used = models.IntegerField(default=0)
     credits_available = models.IntegerField(default=0)
+
+    objects = AccessCodeManager()
 
     def __str__(self):
         return self.code
