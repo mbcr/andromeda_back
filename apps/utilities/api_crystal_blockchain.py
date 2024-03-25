@@ -59,7 +59,7 @@ def new_assessment(cbc_request_data: dict)->dict:
         }
     
     response_data = response.json()
-    logger.debug(f"utils.api_crystal_blockchain>new_assessment: response_code: |{response.status_code}|, response: |{response_data}|, cbc_request_data: |{cbc_request_data}|")
+    logger.debug(f"utils.api_crystal_blockchain>new_assessment: cbc_request_data: |{cbc_request_data}|, response_code: |{response.status_code}|, response: |{response_data}|")
     
     return {
         'status': 'Success',
