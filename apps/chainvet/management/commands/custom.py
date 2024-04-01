@@ -4,6 +4,7 @@ from django.db.models import Q, Sum
 from django.db import transaction
 
 from pprint import pprint
+from datetime import datetime
 
 from apps.chainvet import models
 from apps.users import models as user_models
@@ -263,7 +264,6 @@ class Command(BaseCommand):
             
             # Update the assessment price
             if orders.count()>1:
-                count_of_assessments_with_multiple_orders += 1
                 number_of_prior_assessments = assessment_owner.assessments.filter(time_of_request__lt=date_of_assessment).count()
                 number_of_this_assessment = number_of_prior_assessments + 1
                 price_of_this_assessment = price_of_assessment(orders, number_of_this_assessment)
@@ -320,14 +320,16 @@ class Command(BaseCommand):
         assessments = models.Assessment.objects.filter(is_mock=False, time_of_request__gte=initial_date, time_of_request__lte=final_date)
         company_revenue = 0
         company_expenses = 0
+        company_commissions = 0
         for assessment in assessments:
             company_revenue += assessment.accounting_price_usd_cents
-            company_expenses += assessment.accounting_affiliate_commission_usd_cents
             company_expenses += 60 # Base cost of assessment
+            company_commissions += assessment.accounting_affiliate_commission_usd_cents
 
         self.stdout.write(f'Company revenue for the time window {initial_date} to {final_date}: {company_revenue/100} USD.')
-        self.stdout.write(f'Company expenses for the time window {initial_date} to {final_date}: {company_expenses/100} USD.')
-        self.stdout.write(f'Company profit for the time window {initial_date} to {final_date}: {(company_revenue - company_expenses)/100} USD.')
+        self.stdout.write(f'Company costs for the time window {initial_date} to {final_date}: -{company_expenses/100} USD.')
+        self.stdout.write(f'Company commissions for the time window {initial_date} to {final_date}: -{company_commissions/100} USD.')
+        self.stdout.write(f'Company profit for the time window {initial_date} to {final_date}: {(company_revenue - company_expenses - company_commissions)/100} USD.')
 
 
 
