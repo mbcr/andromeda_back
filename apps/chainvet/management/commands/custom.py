@@ -234,10 +234,18 @@ class Command(BaseCommand):
                     accummulated_credits += number_of_credits
                     credits_to_index_tf[index] = accummulated_credits
                 
+                if order_queryset[0].access_code.code == 'oeZKeY5oF8An7nHx':
+                    self.stdout.write(f'Price discovery:')
+                    pprint(price_discovery)
+                    self.stdout.write(f'Credits to index_tf:')
+                    pprint(credits_to_index_tf)
+                    self.stdout.write(f'len.credits_to_index_tf.keys(): {len(credits_to_index_tf.keys())}')
                 index_of_assessment = 1
                 while index_of_assessment > len(credits_to_index_tf.keys()):
                     acc_credits = credits_to_index_tf[index_of_assessment]
                     if assessment_number <= acc_credits:
+                        if order_queryset[0].access_code.code == 'oeZKeY5oF8An7nHx':
+                            self.stdout.write(f'Assessment number: {assessment_number}, acc_credits: {acc_credits}, index_of_assessment: {index_of_assessment}. Returning price: {price_discovery[index_of_assessment][2]}')
                         return price_discovery[index_of_assessment][2]
                     index_of_assessment += 1
                 
