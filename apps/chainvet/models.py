@@ -154,6 +154,10 @@ class Assessment(models.Model):
     transaction_volume_fiat = models.FloatField(null=True, blank=True)
     transaction_volume_fiat_currency_code = models.CharField(max_length=10, null=True, blank=True)
 
+    accounting_price_usd_cents = models.IntegerField(null=True, blank=True)
+    accounting_price_crypto = models.FloatField(null=True, blank=True)
+    accounting_crypto = models.CharField(max_length=10, null=True, blank=True)
+
     def __str__(self):
         formatted_time = self.time_of_request.strftime('%Y.%m.%d %Hh%Mm%Ss')
         return f'{formatted_time} - {self.type_of_assessment} - {self.assessment_id} - {self.status_assessment}'

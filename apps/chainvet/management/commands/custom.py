@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.db import transaction
 
 from pprint import pprint
@@ -30,6 +30,8 @@ class Command(BaseCommand):
             'search': self.search_assessments,
             'show_assessments_without_network': self.show_assessments_without_network,
             'populate_assessment_networks': self.populate_assessment_networks,
+            'populate_assessment_price': self.populate_assessment_price,
+            'company_income': self.company_income,
         }
 
         if action not in available_actions:
@@ -200,3 +202,108 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(f'Error updating assessment {assessment.id}. Error: {str(e)}. Currency: {assessment.currency}')
                 continue
+
+    def populate_assessment_price(self):
+        def access_code_has_paid_orders_until_date(access_code, date):
+            return access_code.orders.filter(is_paid=True, paid_at__lte=date).exists(), access_code.orders.filter(is_paid=True, paid_at__lte=date).order_by('paid_at')
+        def average_usd_price_for_orders(order_queryset):
+            total_price_usd_cents = 0
+            total_number_of_credits = 0
+            for order in order_queryset:
+                total_price_usd_cents += order.total_price_usd_cents
+                total_number_of_credits += order.number_of_credits
+            return round(total_price_usd_cents / total_number_of_credits)
+
+        assessments = models.Assessment.objects.filter(is_mock=False).order_by('time_of_request')
+        count_of_assessments_with_multiple_orders = 0
+        count_of_assessments_with_single_order = 0
+        for assessment in assessments:
+            assessment_owner = assessment.access_code
+            if not assessment_owner:
+                assessment_owner = assessment.user
+            if not assessment_owner:
+                self.stdout.write(self.style.WARNING(f'Assessment {assessment.id} does not have an owner.'))
+                continue
+            date_of_assessment = assessment.time_of_request
+            access_code_has_orders, orders = access_code_has_paid_orders_until_date(assessment_owner, date_of_assessment)
+            if not access_code_has_orders:
+                self.stdout.write(self.style.WARNING(f'Assessment {assessment.id} owner {assessment_owner} does not have paid orders.'))
+                continue
+            if orders.count()>1:
+                self.stdout.write(self.style.WARNING(f'Assessment {assessment.id} owner {assessment_owner} has more than one paid order: {orders.count()}.'))
+                count_of_assessments_with_multiple_orders += 1
+                continue
+            count_of_assessments_with_single_order += 1
+            average_price_per_assessment = average_usd_price_for_orders(orders)
+            with transaction.atomic():
+                assessment.accounting_price_usd_cents = average_price_per_assessment
+                assessment.save(update_fields=['accounting_price_usd_cents'])
+            
+            
+
+
+    def company_income(self, date_string:str):
+        '''
+        Purpose: Assess the profit and loss of the company for a given time-window.
+        Args: date_string: str - The time-window to assess the profit and loss for. Format: 'YYYY-MM-DD/YYYY-MM-DD'
+        Result: Prints the profit and loss of the company for the given date.
+        '''
+        initial_date, final_date = date_string.split('/')
+        initial_date = datetime.strptime(initial_date, '%Y-%m-%d')
+        final_date = datetime.strptime(final_date, '%Y-%m-%d')
+        
+        def assessments_used_by_access_code_until_date(access_code, date):
+            return access_code.assessments.filter(time_of_request__lte=date).count()
+        def total_revenue_of_access_code_in_time_window(access_code, initial_date, final_date):
+            assessments_used_previously = assessments_used_by_access_code_until_date(access_code, initial_date)
+            assessments_used_in_time_window = assessments_used_by_access_code_until_date(access_code, final_date) - assessments_used_previously
+            if assessments_used_in_time_window == 0:
+                return 0
+
+            access_code_has_orders, orders = access_code_has_paid_orders_until_date(access_code, final_date)
+            if not access_code_has_orders:
+                return 0
+            access_code_has_previous_orders, previous_orders = access_code_has_paid_orders_until_date(access_code, initial_date)
+            if not access_code_has_previous_orders:
+                average_price_per_assessment = average_usd_price_for_orders(orders)
+                return assessments_used_in_time_window * average_price_per_assessment
+            else:
+                total_credits_bought_previously = previous_orders.aggregate(Sum('number_of_credits'))['number_of_credits__sum']
+                total_credits_bought_in_time_window = orders.aggregate(Sum('number_of_credits'))['number_of_credits__sum']
+                initial_credits_available = total_credits_bought_previously - assessments_used_previously
+                if assessments_used_in_time_window < initial_credits_available:
+                    pass
+
+        assessments = models.Assessment.objects.filter(is_mock=False, time_of_request__gte=initial_date, time_of_request__lte=final_date)
+        company_revenue = 0
+        company_expenses = 0
+        for assessment in assessments:
+            company_revenue += assessment.accounting_price_usd_cents
+            company_expenses += 60
+
+        self.stdout.write(f'Company revenue for the time window {initial_date} to {final_date}: {company_revenue/100} USD.')
+        self.stdout.write(f'Company expenses for the time window {initial_date} to {final_date}: {company_expenses/100} USD.')
+        self.stdout.write(f'Company profit for the time window {initial_date} to {final_date}: {(company_revenue - company_expenses)/100} USD.')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
