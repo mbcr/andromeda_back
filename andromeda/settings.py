@@ -113,10 +113,11 @@ INSTALLED_APPS = [
     'djoser',
     'guardian',
 
-    'apps.users',
-    'apps.logManager',
+    'apps.corporate',
     'apps.featureAccessControl',
+    'apps.logManager',
     'apps.surveys',
+    'apps.users',
 
     'apps.chainvet',
 ]
