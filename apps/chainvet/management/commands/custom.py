@@ -270,16 +270,20 @@ class Command(BaseCommand):
                 if price_of_this_assessment != assessment.accounting_price_usd_cents:
                     self.stdout.write(f'Assessment {assessment.id} has a different price. Current: {assessment.accounting_price_usd_cents}. Calculated: {price_of_this_assessment}. Updating...')
                 with transaction.atomic():
+                    affiliate_commission_share = assessment_owner.affiliate_origin.income_share/10000 if assessment_owner.affiliate_origin else 0
                     assessment.accounting_price_usd_cents = price_of_this_assessment
-                    assessment.save(update_fields=['accounting_price_usd_cents'])
+                    assessment.accounting_affiliate_commission_usd_cents = round((average_price_per_assessment-80) * affiliate_commission_share)
+                    assessment.save(update_fields=['accounting_price_usd_cents', 'accounting_affiliate_commission_usd_cents'])
                 continue
             else:
                 average_price_per_assessment = average_usd_price_for_orders(orders)
                 if average_price_per_assessment != assessment.accounting_price_usd_cents:
                     self.stdout.write(f'Assessment {assessment.id} has a different price. Current: {assessment.accounting_price_usd_cents}. Calculated: {price_of_this_assessment}. Updating...')
                 with transaction.atomic():
+                    affiliate_commission_share = assessment_owner.affiliate_origin.income_share/10000 if assessment_owner.affiliate_origin else 0
                     assessment.accounting_price_usd_cents = average_price_per_assessment
-                    assessment.save(update_fields=['accounting_price_usd_cents'])
+                    assessment.accounting_affiliate_commission_usd_cents = round((average_price_per_assessment-80) * affiliate_commission_share)
+                    assessment.save(update_fields=['accounting_price_usd_cents', 'accounting_affiliate_commission_usd_cents'])
             
     def company_income(self, date_string:str):
         '''
@@ -318,7 +322,8 @@ class Command(BaseCommand):
         company_expenses = 0
         for assessment in assessments:
             company_revenue += assessment.accounting_price_usd_cents
-            company_expenses += 60
+            company_expenses += assessment.accounting_affiliate_commission_usd_cents
+            company_expenses += 60 # Base cost of assessment
 
         self.stdout.write(f'Company revenue for the time window {initial_date} to {final_date}: {company_revenue/100} USD.')
         self.stdout.write(f'Company expenses for the time window {initial_date} to {final_date}: {company_expenses/100} USD.')
