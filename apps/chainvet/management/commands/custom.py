@@ -42,6 +42,10 @@ class Command(BaseCommand):
             parameter = options['extra_argument_1'][0]
             available_actions[action](parameter)
             return
+        if action == 'company_income':
+            date_string = options['extra_argument_1'][0]
+            available_actions[action](date_string)
+            return
         available_actions[action]()
 
     def display_liabilities(self):
@@ -213,7 +217,38 @@ class Command(BaseCommand):
                 total_price_usd_cents += order.total_price_usd_cents
                 total_number_of_credits += order.number_of_credits
             return round(total_price_usd_cents / total_number_of_credits)
+        def price_of_assessment(order_queryset, assessment_number):
+            def prepare_price_discovery(order_queryset):
+                price_discovery= []
+                order_queryset = order_queryset.filter(is_paid=True).order_by('paid_at')
+                order_index = 1
+                for order in order_queryset:
+                    price_per_assessment = order.total_price_usd_cents/order.number_of_credits
+                    price_discovery.append((order_index, order.number_of_credits, price_per_assessment))
+                    order_index += 1
+                return price_discovery
+            def find_price_for_assessment(price_discovery, assessment_number):
+                credits_to_index_tf = {}
+                accummulated_credits = 0
+                for index, number_of_credits, price in price_discovery:
+                    accummulated_credits += number_of_credits
+                    credits_to_index_tf[index] = accummulated_credits
+                
+                index_of_assessment = 1
+                while index_of_assessment > len(credits_to_index_tf.keys()):
+                    acc_credits = credits_to_index_tf[index_of_assessment]
+                    if assessment_number <= acc_credits:
+                        return price_discovery[index_of_assessment][2]
+                    index_of_assessment += 1
+                
 
+                # for acc_credits, index in credits_to_index_tf.items():
+                #     if assessment_number <= acc_credits:
+                #         return price_discovery[index-1][2]
+
+            price_discovery = prepare_price_discovery(order_queryset)
+            return find_price_for_assessment(price_discovery, assessment_number)
+            
         assessments = models.Assessment.objects.filter(is_mock=False).order_by('time_of_request')
         count_of_assessments_with_multiple_orders = 0
         count_of_assessments_with_single_order = 0
@@ -222,31 +257,35 @@ class Command(BaseCommand):
             if not assessment_owner:
                 assessment_owner = assessment.user
             if not assessment_owner:
-                self.stdout.write(self.style.WARNING(f'Assessment {assessment.id} does not have an owner.'))
+                self.stdout.write(self.style.ERROR(f'Assessment {assessment.id} does not have an owner.'))
                 continue
             date_of_assessment = assessment.time_of_request
             access_code_has_orders, orders = access_code_has_paid_orders_until_date(assessment_owner, date_of_assessment)
             if not access_code_has_orders:
-                self.stdout.write(self.style.WARNING(f'Assessment {assessment.id} owner {assessment_owner} does not have paid orders.'))
+                self.stdout.write(self.style.ERROR(f'Assessment {assessment.id} owner {assessment_owner} does not have paid orders.'))
                 continue
             if orders.count()>1:
-                self.stdout.write(self.style.WARNING(f'Assessment {assessment.id} owner {assessment_owner} has more than one paid order: {orders.count()}.'))
                 count_of_assessments_with_multiple_orders += 1
-                continue
+                number_of_prior_assessments = assessment_owner.assessments.filter(time_of_request__lt=date_of_assessment).count()
+                number_of_this_assessment = number_of_prior_assessments + 1
+                price_of_this_assessment = price_of_assessment(orders, number_of_this_assessment)
+                with transaction.atomic():
+                    assessment.accounting_price_usd_cents = price_of_this_assessment
+                    assessment.save(update_fields=['accounting_price_usd_cents'])
+                self.stdout.write(self.style.WARNING(f'Assessment {assessment.id} owner {assessment_owner} has more than one paid order: {orders.count()}.'))
             count_of_assessments_with_single_order += 1
             average_price_per_assessment = average_usd_price_for_orders(orders)
             with transaction.atomic():
                 assessment.accounting_price_usd_cents = average_price_per_assessment
                 assessment.save(update_fields=['accounting_price_usd_cents'])
+        self.stdout.write(f'Assessments with multiple orders: {count_of_assessments_with_multiple_orders}.')
+        self.stdout.write(f'Assessments with single order: {count_of_assessments_with_single_order}.')
             
-            
-
-
     def company_income(self, date_string:str):
         '''
         Purpose: Assess the profit and loss of the company for a given time-window.
         Args: date_string: str - The time-window to assess the profit and loss for. Format: 'YYYY-MM-DD/YYYY-MM-DD'
-        Result: Prints the profit and loss of the company for the given date.
+        Result: Prints the profit and loss of the company for the given time-window.
         '''
         initial_date, final_date = date_string.split('/')
         initial_date = datetime.strptime(initial_date, '%Y-%m-%d')
