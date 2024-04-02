@@ -199,10 +199,52 @@ def unrelated():
             break
     print(sorted(results))
 
+def experiment_with_datadump():
+    import os
+    import json
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.getcwd()
+    file_directory = os.path.join(base_dir, 'andromeda_back\\andromeda')
+    file_name = 'datadump.json'
+    document = os.path.join(file_directory, file_name)
+    with open(document) as f:
+        data = json.load(f)
+    model_names = []
+    for item in data:
+        model = item.get('model')
+        if model not in model_names:
+            model_names.append(model)
+    print(model_names)
+    print(sorted(model_names))
+    model_order = [
+        # 'contenttypes.contenttype',
+
+        # 'auth.group',
+        # 'auth.permission',
+        # 'users.customuser'
+        # 'users.accesscode',
+
+        # 'users.chainvetapikey',
+        'users.affiliate',
+        'chainvet.order',
+        'chainvet.assessment',
+        'admin.logentry',
+        'sessions.session',
+        'users.configvariable',
+        'corporate.account',
+        ]
+    ordered_data = []
+    for model_name in model_order:
+        model_items = [item for item in data if item.get('model') == model_name]
+        for item in model_items:
+            ordered_data.append(item)
+    write_document = os.path.join(file_directory, 'ordered_datadump.json')
+    with open(write_document, mode='w') as f:
+        json.dump(ordered_data,f)
 
 
 
-
+experiment_with_datadump()
 
 
 
