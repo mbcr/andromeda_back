@@ -11,7 +11,7 @@ def get_trade_status(trade_id: str):
     start_time = now()
     try:
         url = main_url + 'anonpay/status/' + trade_id
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         end_time = now()
         duration = (end_time - start_time).total_seconds()
         logger.debug(f"trocador_api>get_trade_status: trade_id: {trade_id}, response_code: {response.status_code}. (Duration: {duration} seconds)")
@@ -33,7 +33,7 @@ def get_trade_status_batch(trade_ids: list):
             'api_key': settings.TROCADOR_API_KEY,
             'trade_ids': trade_ids_str
         }
-        response = requests.post(url, json=request_data)
+        response = requests.post(url, json=request_data, timeout=10)
         if response.status_code != 200:
             raise Exception(f"trocador_api>get_trade_status_batch: VCW12 Failed to get response from trocador_api.get_trade_status_batch. Status code was: {response.status_code}. Request was: {request_data}. Response was: {response.text}.")
         

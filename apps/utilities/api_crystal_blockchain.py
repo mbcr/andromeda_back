@@ -81,7 +81,8 @@ def check_assessment_by_id(cbc_id:str)->dict:
     response = requests.post(
         url=request_url,
         headers=request_headers,
-        json= cbc_request_data
+        json= cbc_request_data,
+        timeout=10,
     )
 
     if response.status_code != 200:
