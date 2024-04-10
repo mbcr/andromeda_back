@@ -244,8 +244,6 @@ def experiment_with_datadump():
 
 
 
-experiment_with_datadump()
-
 
 
 
