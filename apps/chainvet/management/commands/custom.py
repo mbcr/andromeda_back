@@ -295,7 +295,7 @@ class Command(BaseCommand):
         initial_date = datetime.strptime(initial_date, '%Y-%m-%d')
         final_date = datetime.strptime(final_date, '%Y-%m-%d')
         
-        def assessments_used_by_access_code_until_date(access_code, date):
+        def assessments_used_by_access_code_until_date(access_code, date)->int:
             return access_code.assessments.filter(time_of_request__lte=date).count()
         def total_revenue_of_access_code_in_time_window(access_code, initial_date, final_date):
             assessments_used_previously = assessments_used_by_access_code_until_date(access_code, initial_date)
@@ -317,16 +317,23 @@ class Command(BaseCommand):
                 if assessments_used_in_time_window < initial_credits_available:
                     pass
 
-        assessments = models.Assessment.objects.filter(is_mock=False, time_of_request__gte=initial_date, time_of_request__lte=final_date)
+        assessments = models.Assessment.objects.filter(is_mock=False, time_of_request__gte=initial_date, time_of_request__lte=final_date).order_by('time_of_request')
         company_revenue = 0
         company_expenses = 0
         company_commissions = 0
         for assessment in assessments:
-            company_revenue += assessment.accounting_price_usd_cents
-            company_expenses += 60 # Base cost of assessment
-            company_commissions += assessment.accounting_affiliate_commission_usd_cents
-            print(f'Assessment {assessment.id}, AC: {assessment.access_code.code if assessment.access_code else assessment.user.email}, {assessment.time_of_request} Rev: {assessment.accounting_price_usd_cents}, Comm: {assessment.accounting_affiliate_commission_usd_cents}')
+            try:
+                company_revenue += assessment.accounting_price_usd_cents
+                company_expenses += 60 # Base cost of assessment
+                commission = assessment.accounting_affiliate_commission_usd_cents
+                if commission < 0:
+                    commission = 0
+                company_commissions += commission
+                print(f'Assessment {assessment.id}, AC: {assessment.access_code.code if assessment.access_code else assessment.user.email}, {assessment.time_of_request} Rev: {assessment.accounting_price_usd_cents}, Comm: {commission}')
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'Error processing assessment ID {assessment.id}, AC: {assessment.access_code.code}. Accounting price: {assessment.accounting_price_usd_cents}. Affiliate Commissions: {assessment.accounting_affiliate_commission_usd_cents} Error: {str(e)}.'))
 
+        self.stdout.write(f'Assessments processed: {assessments.count()}')
         self.stdout.write(f'Company revenue for the time window {initial_date} to {final_date}: {company_revenue/100} USD.')
         self.stdout.write(f'Company costs for the time window {initial_date} to {final_date}: -{company_expenses/100} USD.')
         self.stdout.write(f'Company commissions for the time window {initial_date} to {final_date}: -{company_commissions/100} USD.')
