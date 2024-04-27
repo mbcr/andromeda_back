@@ -349,6 +349,9 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'Error processing assessment ID {assessment.id}, AC: {assessment.access_code.code}. Accounting price: {assessment.accounting_price_usd_cents}. Affiliate Commissions: {assessment.accounting_affiliate_commission_usd_cents} Error: {str(e)}.'))
 
+        assets_credits = assessments.last().response_data.get("meta").get("calls_left")
+        assets_total = (company_current_assets+assets_credits*60)/100
+        liabilities_total = (company_deferred_revenue+company_commissions)/100
 
         self.stdout.write(f'Assessments processed: {assessments.count()}')
         self.stdout.write(f'Orders processed: {orders_paid.count()} Credits sold: {company_sales_credits}   Credit liability changed by: {company_sales_credits - assessments.count()}')
@@ -362,15 +365,17 @@ class Command(BaseCommand):
         self.stdout.write(f'--- - - - ---')
         self.stdout.write(f'Assets and Liability deltas for the time window {initial_date} to {final_date}:')
         self.stdout.write(f'    Current assets: {company_current_assets/100} USD.')
-        self.stdout.write(f'    TOTAL ASSETS: {company_current_assets/100} USD.')
+        self.stdout.write(f'    AML Credits: {(assets_credits*60)/100} USD. ({assets_credits} credits)')
+        self.stdout.write(f'    TOTAL ASSETS: {assets_total} USD.')
         self.stdout.write(f'    ---')
         self.stdout.write(f'    Deferred revenue: {company_deferred_revenue/100} USD.')
         self.stdout.write(f'    Provision for comissions: {company_commissions/100} USD.')
-        self.stdout.write(f'    TOTAL LIABILITIES: {(company_deferred_revenue+company_commissions)/100} USD.')
+        self.stdout.write(f'    TOTAL LIABILITIES: {liabilities_total} USD.')
         self.stdout.write(f'    ---')
         self.stdout.write(f'    Retained Earnings: {company_profit/100} USD.')
-        self.stdout.write(f'    TOTAL EQUITY: {company_profit/100} USD.')
-        self.stdout.write(f'A-L-E CHECK: {company_current_assets/100} - {company_deferred_revenue/100 + company_commissions/100} - {company_profit/100} = {company_current_assets/100 - company_deferred_revenue/100 - company_commissions/100 - company_profit/100}')
+        self.stdout.write(f"    Shareholder's Equity: {3000.00} USD.")
+        self.stdout.write(f'    TOTAL EQUITY: {company_profit/100 + 3000} USD.')
+        self.stdout.write(f'A-L-E CHECK: {assets_total} - {liabilities_total} - {company_profit/100 + 3000} = {assets_total - liabilities_total - company_profit/100 - 3000:.2f}')
 
 
 
