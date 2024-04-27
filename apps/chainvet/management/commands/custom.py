@@ -317,27 +317,60 @@ class Command(BaseCommand):
                 if assessments_used_in_time_window < initial_credits_available:
                     pass
 
+
+        orders_paid = models.Order.objects.filter(is_paid=True, paid_at__gte=initial_date, paid_at__lte=final_date).order_by('paid_at')
+        company_sales_usd_cents = 0
+        company_sales_credits = 0
+        company_deferred_revenue = 0
+        company_current_assets = 0
+        for order in orders_paid:
+            company_sales_credits += order.number_of_credits
+            company_sales_usd_cents += order.total_price_usd_cents
+            company_current_assets += order.total_price_usd_cents
+            company_deferred_revenue += order.total_price_usd_cents
+
+
         assessments = models.Assessment.objects.filter(is_mock=False, time_of_request__gte=initial_date, time_of_request__lte=final_date).order_by('time_of_request')
         company_revenue = 0
         company_expenses = 0
         company_commissions = 0
+        company_profit = 0
         for assessment in assessments:
             try:
                 company_revenue += assessment.accounting_price_usd_cents
+                company_deferred_revenue -= assessment.accounting_price_usd_cents
                 company_expenses += 60 # Base cost of assessment
                 commission = assessment.accounting_affiliate_commission_usd_cents
                 if commission < 0:
                     commission = 0
                 company_commissions += commission
+                company_profit += assessment.accounting_price_usd_cents - 60 - commission
                 print(f'Assessment {assessment.id}, AC: {assessment.access_code.code if assessment.access_code else assessment.user.email}, {assessment.time_of_request} Rev: {assessment.accounting_price_usd_cents}, Comm: {commission}')
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'Error processing assessment ID {assessment.id}, AC: {assessment.access_code.code}. Accounting price: {assessment.accounting_price_usd_cents}. Affiliate Commissions: {assessment.accounting_affiliate_commission_usd_cents} Error: {str(e)}.'))
 
+
         self.stdout.write(f'Assessments processed: {assessments.count()}')
-        self.stdout.write(f'Company revenue for the time window {initial_date} to {final_date}: {company_revenue/100} USD.')
-        self.stdout.write(f'Company costs for the time window {initial_date} to {final_date}: -{company_expenses/100} USD.')
-        self.stdout.write(f'Company commissions for the time window {initial_date} to {final_date}: -{company_commissions/100} USD.')
-        self.stdout.write(f'Company profit for the time window {initial_date} to {final_date}: {(company_revenue - company_expenses - company_commissions)/100} USD.')
+        self.stdout.write(f'Orders processed: {orders_paid.count()} Credits sold: {company_sales_credits}   Credit liability changed by: {company_sales_credits - assessments.count()}')
+        self.stdout.write(f'--- - - - ---')
+        self.stdout.write(f'Company P&L accounts for the time window {initial_date} to {final_date}:')
+        self.stdout.write(f'    Sales: {company_sales_usd_cents/100:.2f} USD. ({company_sales_credits} credits)')
+        self.stdout.write(f'    Revenue: {company_revenue/100} USD.')
+        self.stdout.write(f'    COGS: -{company_expenses/100} USD.')
+        self.stdout.write(f'    Commissions: -{company_commissions/100} USD.')
+        self.stdout.write(f'    Profit: {company_profit/100} USD.')
+        self.stdout.write(f'--- - - - ---')
+        self.stdout.write(f'Assets and Liability deltas for the time window {initial_date} to {final_date}:')
+        self.stdout.write(f'    Current assets: {company_current_assets/100} USD.')
+        self.stdout.write(f'    TOTAL ASSETS: {company_current_assets/100} USD.')
+        self.stdout.write(f'    ---')
+        self.stdout.write(f'    Deferred revenue: {company_deferred_revenue/100} USD.')
+        self.stdout.write(f'    Provision for comissions: {company_commissions/100} USD.')
+        self.stdout.write(f'    TOTAL LIABILITIES: {(company_deferred_revenue+company_commissions)/100} USD.')
+        self.stdout.write(f'    ---')
+        self.stdout.write(f'    Retained Earnings: {company_profit/100} USD.')
+        self.stdout.write(f'    TOTAL EQUITY: {company_profit/100} USD.')
+        self.stdout.write(f'A-L-E CHECK: {company_current_assets/100} - {company_deferred_revenue/100 + company_commissions/100} - {company_profit/100} = {company_current_assets/100 - company_deferred_revenue/100 - company_commissions/100 - company_profit/100}')
 
 
 
