@@ -242,7 +242,7 @@ class CreditOwnerMixin:
             return True, None
         def cbc_currency_and_network_transfer_function(currency:str, network:str):
             # Grandfathered currencies (until tests are performed 2024.03.18):
-            if network is None and currency in ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dash', 'doge', 'eth', 'ltc', 'matic', 'sol', 'ton', 'trx', 'xno']:
+            if network is None and currency in ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dash', 'doge', 'eth', 'ltc', 'matic', 'op' ,'sol', 'ton', 'trx', 'xno']:
                 return {'currency': currency, 'token_id': 0}
 
             currency = currency.lower()
@@ -263,6 +263,7 @@ class CreditOwnerMixin:
                 'eth_eth': {'currency': 'eth', 'token_id': 0},
                 'ltc_ltc': {'currency': 'ltc', 'token_id': 0},
                 'matic_matic': {'currency': 'matic', 'token_id': 0},
+                'op_op': {'currency': 'op', 'token_id': 0},
                 'sol_sol': {'currency': 'sol', 'token_id': 0},
                 'ton_ton': {'currency': 'ton', 'token_id': 0},
                 'trx_trx': {'currency': 'trx', 'token_id': 0},
