@@ -74,7 +74,7 @@ def check_assessment_by_id(cbc_id:str)->dict:
     request_url = f"{api_main_url}/{specific_url}"
     cbc_request_data = {
         "filter": {
-            "id": "975b97e"
+            "id": cbc_id
         }
     }
 
