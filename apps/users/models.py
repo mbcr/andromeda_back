@@ -219,15 +219,15 @@ class CreditOwnerMixin:
             return get_random_string(length, chars)
         def validate_currency_and_network(currency:str, network:str):
             # Grandfathered currencies (until tests are performed 2024.03.18):
-            if network is None and currency in ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dash', 'doge', 'eth', 'ltc', 'matic', 'sol', 'ton', 'trx', 'xno']:
+            if network is None and currency in ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dash', 'doge', 'eth', 'ltc', 'matic', 'op', 'sol', 'ton', 'trx', 'xno']:
                 return True, None
 
             # Standardize parameters to lower case
             currency = currency.lower()
             network = network.lower()
             # Declare valid values of currency and network
-            valid_currencies = ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dai', 'dash', 'doge', 'eth', 'ltc', 'matic', 'sol', 'ton', 'trx', 'usdc', 'usdt', 'xno']
-            valid_networks = ['ada', 'algo','arbitrum', 'atom', 'bsc', 'btc', 'dash', 'doge', 'erc20', 'eth', 'ltc', 'matic', 'nano', 'sol', 'ton', 'trx']
+            valid_currencies = ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dai', 'dash', 'doge', 'eth', 'ltc', 'matic', 'op', 'sol', 'ton', 'trx', 'usdc', 'usdt', 'xno']
+            valid_networks = ['ada', 'algo','arbitrum', 'atom', 'bsc', 'btc', 'dash', 'doge', 'erc20', 'eth', 'ltc', 'matic', 'op', 'nano', 'sol', 'ton', 'trx']
             # Declare valid pairs of currency and network
             valid_pairs = [('ada', 'ada'), ('algo', 'algo'), ('arb', 'arbitrum'), ('atom', 'atom'), ('bnb', 'bsc'), ('btc', 'btc'), ('dai', 'bsc'), ('dai', 'erc20'), ('dash', 'dash'), ('doge', 'doge'), ('eth', 'eth'), ('ltc', 'ltc'), ('matic', 'matic'), ('sol', 'sol'), ('ton', 'ton'), ('trx', 'trx'), ('usdc', 'erc20'), ('usdc', 'matic'), ('usdt', 'trx'), ('usdt', 'erc20'), ('usdt', 'bsc'), ('xno', 'nano')]
             
