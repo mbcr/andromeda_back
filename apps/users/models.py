@@ -229,7 +229,7 @@ class CreditOwnerMixin:
             valid_currencies = ['ada', 'algo', 'arb', 'atom', 'bnb', 'btc', 'dai', 'dash', 'doge', 'eth', 'ltc', 'matic', 'op', 'sol', 'ton', 'trx', 'usdc', 'usdt', 'xno']
             valid_networks = ['ada', 'algo','arbitrum', 'atom', 'bsc', 'btc', 'dash', 'doge', 'erc20', 'eth', 'ltc', 'matic', 'op', 'nano', 'sol', 'ton', 'trx']
             # Declare valid pairs of currency and network
-            valid_pairs = [('ada', 'ada'), ('algo', 'algo'), ('arb', 'arbitrum'), ('atom', 'atom'), ('bnb', 'bsc'), ('btc', 'btc'), ('dai', 'bsc'), ('dai', 'erc20'), ('dash', 'dash'), ('doge', 'doge'), ('eth', 'eth'), ('ltc', 'ltc'), ('matic', 'matic'), ('sol', 'sol'), ('ton', 'ton'), ('trx', 'trx'), ('usdc', 'erc20'), ('usdc', 'matic'), ('usdt', 'trx'), ('usdt', 'erc20'), ('usdt', 'bsc'), ('xno', 'nano')]
+            valid_pairs = [('ada', 'ada'), ('algo', 'algo'), ('arb', 'arbitrum'), ('atom', 'atom'), ('bnb', 'bsc'), ('btc', 'btc'), ('dai', 'bsc'), ('dai', 'erc20'), ('dash', 'dash'), ('doge', 'doge'), ('eth', 'eth'), ('ltc', 'ltc'), ('matic', 'matic'), ('op','op'), ('sol', 'sol'), ('ton', 'ton'), ('trx', 'trx'), ('usdc', 'erc20'), ('usdc', 'matic'), ('usdt', 'trx'), ('usdt', 'erc20'), ('usdt', 'bsc'), ('xno', 'nano')]
             
 
             # Check if the currency and network are valid
