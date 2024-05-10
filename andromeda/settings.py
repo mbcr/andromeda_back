@@ -47,6 +47,7 @@ TROCADOR_API_KEY = env('TROCADOR_API_KEY')
 
 ALLOWED_HOSTS = [
     'andromedachain.com',
+    'www.andromedachain.com',
     '185.165.169.144',
     "localhost:5173",
     "127.0.0.1:5173",
