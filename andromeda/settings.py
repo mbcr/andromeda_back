@@ -46,8 +46,7 @@ CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
 TROCADOR_API_KEY = env('TROCADOR_API_KEY')
 
 ALLOWED_HOSTS = [
-    'chainvet-frontend.herokuapp.com',
-    'chainvet-backend.herokuapp.com',
+    'andromedachain.com',
     '185.165.169.144',
     "localhost:5173",
     "127.0.0.1:5173",
@@ -60,11 +59,13 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://185.165.169.144",
     "https://185.165.169.144",
+    "http://andromedachain.com",
+    "https://andromedachain.com",
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'https://chainvet-frontend.herokuapp.com',
-    'https://chainvet-backend.herokuapp.com',
+    'http://andromedachain.com',
+    'https://andromedachain.com',
     'http://185.165.169.144',
     'https://185.165.169.144',
     "http://localhost:5173",
