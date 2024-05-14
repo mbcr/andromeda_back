@@ -7,6 +7,22 @@ main_url = 'https://trocador.app/en/'
 logger = logging.getLogger('api_calls_trocador')
 error_logger = logging.getLogger('error_logger')
 
+def get_trade_info_for_missing_anonpay_ids(andromeda_id_list:list):
+    start_time = now()
+    try:
+        url = main_url + 'amlpaymentidcheck/'
+        payload = {'andromeda_id_list': andromeda_id_list}
+        response = requests.post(url, payload,timeout=10)
+        end_time = now()
+        duration = (end_time - start_time).total_seconds()
+        logger.debug(f"trocador_api>get_trade_info_for_missing_anonpay_ids: andromeda_id_list: {andromeda_id_list}, response_code: {response.status_code}. (Duration: {duration} seconds)")
+        return response
+    except Exception as e:
+        end_time = now()
+        duration = (end_time - start_time).total_seconds()
+        logger.debug(f"trocador_api>get_trade_info_for_missing_anonpay_ids: FAILED to get trade info: {andromeda_id_list}, response_code: {response.status_code}. Raising error. (Duration: {duration} seconds)")
+        raise e
+
 def get_trade_status(trade_id: str):
     start_time = now()
     try:
@@ -46,3 +62,15 @@ def get_trade_status_batch(trade_ids: list):
         duration = (end_time - start_time).total_seconds()
         error_logger.debug(f"trocador_api>get_trade_status_batch: FAILED to get trade_ids_str: {trade_ids_str}. Duration: {duration} seconds. Error: {e}. Requested IDs were: {trade_ids}.")
         raise Exception(f"Failed to get response from trocador_api.get_trade_status_batch. Error was: {e}. Request was: {request_data}.")
+
+
+
+
+
+
+
+
+
+
+
+

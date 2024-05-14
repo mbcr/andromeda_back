@@ -6,6 +6,7 @@ from django.conf import settings
 from datetime import datetime, timedelta
 import time
 import logging
+import json
 
 from apps.utilities import system_messenger
 from apps.chainvet import models as chainvet_models
@@ -94,6 +95,53 @@ def check_payments():
     except Exception as e:
         error_logger.debug("Error in check_unpaid_orders_for_payments: %s", e)
         return "Failed"
+
+@shared_task(name = "fetch_missing_trocador_ids")
+def fetch_missing_trocador_ids():
+    '''
+    Fetches the missing anonpay_ids for orders that have been created in the last 3 days. 
+    Updates the orders with the fetched anonpay_ids, and trade status
+    '''
+
+    # Send request and fetch trade info
+    date_cutoff = django_tz.now() - timedelta(days=3)
+    missing_anonpay_orders = chainvet_models.Order.objects.filter(anonpay_id__isnull=True, created_at__gte=date_cutoff)
+    if not missing_anonpay_orders.exists():
+        return "No missing anonpay_ids found within 3 days to be fetched."
+    try:
+        andromeda_id_list = list(missing_anonpay_orders.values_list('order_id', flat=True))
+        response = trocador_api.get_trade_info_for_missing_anonpay_ids(andromeda_id_list)
+        response_data = response.json()
+    except Exception as e:
+        error_logger.debug(f"apps.chainvet.tasks.fetch_missing_trocador_ids> Failed to get or decode response from trocador_api. Error was {str(e)}")
+        return "Failed to get or decode response from trocador_api.get_trade_info_for_missing_anonpay_ids."
+
+    # Error handling
+    if response.status_code == 204:
+        return "No missing anonpay_ids found within 3 days to be fetched."
+    if response.status_code != 200:
+        error_logger.debug(f"apps.chainvet.tasks.fetch_missing_trocador_ids> Failed to get response from trocador_api. Status code was {response.status_code}. Response was {response.text}.")
+        return f"Failed to get response from trocador_api.get_trade_info_for_missing_anonpay_ids. Status code was {response.status_code}. Response was {response.text}."
+    
+    # Process the response and update the orders
+    try:
+        for order in missing_anonpay_orders:
+            order_id = order.order_id
+            if order_id not in response_data:
+                continue
+            logger.debug(f"apps.chainvet.tasks.fetch_missing_trocador_ids> Order {order_id} found without anonpay_id. Updating...")
+            trade_info = response_data[order_id]
+            order.anonpay_id = trade_info.get('anonpay_id')
+            order.status = trade_info.get('status')
+            order.status_updated_at = django_tz.now()
+            if trade_info.get('status') == 'finished':
+                order.is_paid = True
+                order.paid_at = trade_info.get('trade_finished_in')
+            order.save()
+        return "Success"
+    except Exception as e:
+        error_logger.debug(f"apps.chainvet.tasks.fetch_missing_trocador_ids> Failed to update orders with fetched anonpay_ids. Error was {str(e)}")
+        return "Failed to update orders with fetched anonpay_ids."
 
 
 @shared_task(name = "update_non_ready_assessments")

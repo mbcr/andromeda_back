@@ -38,6 +38,10 @@ app.conf.beat_schedule = {
     'update-new-assessments': {
         'task': 'update_non_ready_assessments',
         'schedule': 60 * 3,
-    }
+    },
+    'fetch_missing_trocador_ids': {
+        'task': 'fetch_missing_trocador_ids',
+        'schedule': 60 * 10,
+    },
 }  
 
