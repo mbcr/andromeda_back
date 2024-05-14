@@ -33,7 +33,6 @@ class Command(BaseCommand):
             'populate_assessment_networks': self.populate_assessment_networks,
             'populate_assessment_price': self.populate_assessment_price,
             'company_income': self.company_income,
-            'check_id': self.check_id,
         }
 
         if action not in available_actions:
@@ -380,17 +379,15 @@ class Command(BaseCommand):
         self.stdout.write(f'    TOTAL EQUITY: {company_profit/100 + 3000} USD.')
         self.stdout.write(f'A-L-E CHECK: {assets_total} - {liabilities_total} - {company_profit/100 + 3000} = {assets_total - liabilities_total - company_profit/100 - 3000:.2f}')
 
-    def check_id(self):
-
-def check_assessments_with_specific_id(target_id:str):
-    assessments = models.Assessment.objects.filter(Q(response_data__id=target_id))
-    count = assessments.count()
-    print(f'Found {count} assessments with ID {target_id}.')
-    for assessment in assessments:
-        assessment.status_assessment = 'non-ready'
-        assessment.save()
-        assessment.update_assessment()
-        print(f'    Assessment {assessment.id} updated.')
+    def check_assessments_with_specific_id(target_id:str):
+        assessments = models.Assessment.objects.filter(Q(response_data__id=target_id))
+        count = assessments.count()
+        print(f'Found {count} assessments with ID {target_id}.')
+        for assessment in assessments:
+            assessment.status_assessment = 'non-ready'
+            assessment.save()
+            assessment.update_assessment()
+            print(f'    Assessment {assessment.id} updated.')
 
 
 
