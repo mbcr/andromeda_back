@@ -44,6 +44,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG') == 'True'
 CRYSTAL_API_KEY = env('CRYSTALBC_KEY')
 TROCADOR_API_KEY = env('TROCADOR_API_KEY')
+TROCADOR_API_KEY_2 = env('TROCADOR_API_KEY_2')
 
 ALLOWED_HOSTS = [
     'andromedachain.com',

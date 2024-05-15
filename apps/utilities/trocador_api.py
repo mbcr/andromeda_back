@@ -1,6 +1,7 @@
 import requests
 import logging
 from django.utils.timezone import now
+from django.conf import settings
 
 
 main_url = 'https://trocador.app/en/'
@@ -11,8 +12,12 @@ def get_trade_info_for_missing_anonpay_ids(andromeda_id_list:list):
     start_time = now()
     try:
         url = main_url + 'amlpaymentidcheck/'
+        request_headers={
+            # "accept": "application/json",
+            "Api-key": settings.TROCADOR_API_KEY_2
+        }
         payload = {'andromeda_id_list': andromeda_id_list}
-        response = requests.post(url, payload,timeout=10)
+        response = requests.post(url, payload,timeout=10, headers=request_headers)
         end_time = now()
         duration = (end_time - start_time).total_seconds()
         logger.debug(f"trocador_api>get_trade_info_for_missing_anonpay_ids: andromeda_id_list: {andromeda_id_list}, response_code: {response.status_code}. (Duration: {duration} seconds)")
