@@ -183,6 +183,7 @@ class Assessment(models.Model):
             cbc_response = api_crystal_blockchain.check_assessment_by_id(self.assessment_id)
         except Exception as e:
             error_log.debug(f"apps.chainvet.models>Assessment: Code MAU87 Error in update_assessment for assessment {str(self)}: {e}")
+            return
 
         if cbc_response.get('status') == 'Error':
             error_log.debug(f"apps.chainvet.models>Assessment: Code MAU88. Error message: {cbc_response.get('message')}")
