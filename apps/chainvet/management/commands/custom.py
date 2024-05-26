@@ -379,7 +379,7 @@ class Command(BaseCommand):
         self.stdout.write(f'    TOTAL EQUITY: {company_profit/100 + 3000} USD.')
         self.stdout.write(f'A-L-E CHECK: {assets_total} - {liabilities_total} - {company_profit/100 + 3000} = {assets_total - liabilities_total - company_profit/100 - 3000:.2f}')
 
-    def check_assessments_with_specific_id(target_id:str):
+    def check_assessments_with_specific_id(self, target_id:str):
         assessments = models.Assessment.objects.filter(Q(response_data__id=target_id))
         count = assessments.count()
         print(f'Found {count} assessments with ID {target_id}.')
@@ -388,10 +388,7 @@ class Command(BaseCommand):
             assessment.save()
             assessment.update_assessment()
             print(f'    Assessment {assessment.id} updated.')
-
-
-
-    self.stdout.write(f'Found {count} assessments with ID {target_id}.')
+        self.stdout.write(f'Found {count} assessments with ID {target_id}.')
 
 
 
