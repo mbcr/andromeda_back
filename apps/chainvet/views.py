@@ -496,6 +496,11 @@ def create_new_order(request):
             target_user = new_access_code
 
     try: # Create the new order from the target user's entity and return payload
+        new_orders_are_enabled = user_models.ConfigVariable.objects.get(name='new_orders_enabled').value == "True"
+
+        if not new_orders_are_enabled:
+            return Response({"detail": "New orders are currently disabled"}, status=status.HTTP_403_FORBIDDEN)
+            
         new_order = target_user.create_new_order_v1(
             number_of_credits = request.data.get('number_of_credits'),
             payment_coin = request.data.get('payment_coin'),
